@@ -3,115 +3,161 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Debug Relay — Participant View</title>
+  <title>Debug Relay — The Great Trial</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary:   #03030d;
-      --bg-card:      #0a0a1e;
-      --bg-code:      #080818;
-      --accent-cyan:  #00e5ff;
-      --accent-violet:#9d4edd;
-      --accent-pink:  #f72585;
-      --accent-green: #06ffa5;
-      --accent-amber: #ffd60a;
-      --text-primary: #e8eaf6;
-      --text-muted:   #6b6e8e;
-      --border:       rgba(255,255,255,0.07);
-      --radius:       20px;
+      --bg-primary:    #060200;
+      --bg-card:       #120900;
+      --bg-code:       #080400;
+      --gold:          #c9a227;
+      --gold-light:    #f0c040;
+      --gold-dim:      #7a6015;
+      --crimson:       #c41e3a;
+      --blood:         #7a0f1e;
+      --ember:         #e8621a;
+      --fire:          #ff7b2b;
+      --ash:           #8b7355;
+      --parchment:     #e8d5a3;
+      --parchment-dim: #a89070;
+      --border:        rgba(201,162,39,0.14);
+      --border-strong: rgba(201,162,39,0.28);
     }
 
     html, body {
       height: 100%;
       background: var(--bg-primary);
-      color: var(--text-primary);
-      font-family: 'Outfit', sans-serif;
+      color: var(--parchment);
+      font-family: 'IM Fell English', Georgia, serif;
       overflow: hidden;
       user-select: none;
     }
 
-    /* ─── ANIMATED GRID BG ─── */
+    /* ─── STONE GRID TEXTURE ─── */
     body::before {
       content: '';
       position: fixed; inset: 0;
       background-image:
-        linear-gradient(rgba(157,78,221,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(157,78,221,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
+        repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,162,39,0.02) 60px, rgba(201,162,39,0.02) 61px),
+        repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,162,39,0.015) 60px, rgba(201,162,39,0.015) 61px);
       pointer-events: none; z-index: 0;
     }
 
-    /* Ambient orbs */
-    .orb {
-      position: fixed; border-radius: 50%;
-      filter: blur(100px); pointer-events: none; z-index: 0;
+    /* Ambient fire glow left */
+    .orb-fire-l {
+      position: fixed;
+      width: 600px; height: 600px;
+      background: radial-gradient(ellipse, rgba(196,30,58,0.10) 0%, transparent 65%);
+      top: -200px; left: -200px;
+      border-radius: 50%; filter: blur(60px);
+      pointer-events: none; z-index: 0;
+      animation: orbBreath 6s ease-in-out infinite;
     }
-    .orb-1 { width:500px;height:500px; background:radial-gradient(circle,rgba(157,78,221,0.18) 0%,transparent 70%); top:-150px;left:-150px; }
-    .orb-2 { width:400px;height:400px; background:radial-gradient(circle,rgba(0,229,255,0.12) 0%,transparent 70%); bottom:-100px;right:-100px; }
-    .orb-3 { width:300px;height:300px; background:radial-gradient(circle,rgba(247,37,133,0.08) 0%,transparent 70%); top:50%;right:10%; }
+    .orb-fire-r {
+      position: fixed;
+      width: 500px; height: 500px;
+      background: radial-gradient(ellipse, rgba(232,98,26,0.08) 0%, transparent 65%);
+      bottom: -150px; right: -150px;
+      border-radius: 50%; filter: blur(60px);
+      pointer-events: none; z-index: 0;
+      animation: orbBreath 5s ease-in-out infinite reverse;
+    }
+    @keyframes orbBreath {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.12); opacity: 0.7; }
+    }
 
-    /* ─── WAITING / IDLE SCREEN ─── */
+    /* ─── CORNER ORNAMENTS ─── */
+    .corner-deco {
+      position: fixed;
+      width: 100px; height: 100px;
+      pointer-events: none; z-index: 1; opacity: 0.2;
+    }
+    .corner-deco.tl { top: 0; left: 0; border-top: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+    .corner-deco.tr { top: 0; right: 0; border-top: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+    .corner-deco.bl { bottom: 0; left: 0; border-bottom: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+    .corner-deco.br { bottom: 0; right: 0; border-bottom: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+
+    /* ─── WAITING SCREEN ─── */
     #waiting-screen {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 50; text-align: center;
-      transition: opacity 0.5s, transform 0.5s;
+      transition: opacity 0.6s, transform 0.6s;
     }
-    #waiting-screen.hidden { opacity:0; pointer-events:none; transform: scale(1.02); }
+    #waiting-screen.hidden { opacity: 0; pointer-events: none; transform: scale(1.03); }
 
-    .wait-logo {
-      width: 100px; height: 100px;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border-radius: 28px;
-      margin: 0 auto 28px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 48px;
-      box-shadow: 0 0 60px rgba(157,78,221,0.4);
-      animation: logoFloat 3s ease-in-out infinite;
+    .wait-dragon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: dragonFloat 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(232,98,26,0.7));
     }
-    @keyframes logoFloat {
-      0%,100% { transform: translateY(0); }
-      50%      { transform: translateY(-10px); }
+    @keyframes dragonFloat {
+      0%,100% { transform: translateY(0) rotate(-2deg); filter: drop-shadow(0 0 30px rgba(232,98,26,0.6)); }
+      50%      { transform: translateY(-14px) rotate(2deg); filter: drop-shadow(0 0 60px rgba(255,123,43,0.9)); }
     }
     .wait-event {
-      font-size: 13px; font-weight: 600; letter-spacing: 4px;
-      text-transform: uppercase; color: var(--accent-violet);
-      margin-bottom: 12px;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 11px; letter-spacing: 5px;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 14px;
     }
     .wait-title {
-      font-size: 44px; font-weight: 800;
-      background: linear-gradient(135deg, #fff 0%, var(--accent-cyan) 100%);
+      font-family: 'Cinzel', serif;
+      font-size: 52px; font-weight: 900;
+      background: linear-gradient(180deg, var(--gold-light) 0%, var(--ember) 60%, var(--crimson) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; margin-bottom: 12px;
+      background-clip: text;
+      margin-bottom: 10px;
+      text-shadow: none;
+      line-height: 1.1;
     }
     .wait-sub {
-      font-size: 18px; color: var(--text-muted); margin-bottom: 48px;
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 18px; color: var(--ash);
+      margin-bottom: 16px;
     }
-    .wait-indicators {
+    /* Quote divider */
+    .wait-divider {
       display: flex; align-items: center; gap: 16px;
-      background: rgba(13,13,30,0.8);
-      border: 1px solid var(--border);
-      border-radius: 40px;
+      margin: 20px auto 28px;
+      width: 360px;
+    }
+    .wait-divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); }
+    .wait-divider-icon { color: var(--gold-dim); font-size: 14px; }
+
+    .wait-indicators {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(18,9,0,0.85);
+      border: 1px solid var(--border-strong);
+      border-radius: 4px;
       padding: 14px 28px;
     }
     .wait-dot {
       width: 10px; height: 10px; border-radius: 50%;
-      background: var(--accent-violet);
-      animation: waitPulse 1.4s ease-in-out infinite;
+      background: var(--ember);
+      animation: fireWait 1.4s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--ember);
     }
-    .wait-dot:nth-child(2) { animation-delay: 0.2s; }
-    .wait-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes waitPulse {
+    .wait-dot:nth-child(2) { animation-delay: 0.25s; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+    .wait-dot:nth-child(3) { animation-delay: 0.5s; }
+    @keyframes fireWait {
       0%,80%,100% { transform: scale(0.6); opacity: 0.4; }
-      40%          { transform: scale(1); opacity: 1; }
+      40%          { transform: scale(1.1); opacity: 1; }
     }
-    .wait-text { font-size: 15px; color: var(--text-muted); }
+    .wait-text {
+      font-family: 'Cinzel', serif;
+      font-size: 12px; color: var(--ash);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
 
     /* ─── QUESTION SCREEN ─── */
     #question-screen {
@@ -119,173 +165,202 @@
       display: flex; flex-direction: column;
       z-index: 40;
       opacity: 0; pointer-events: none;
-      transition: opacity 0.5s;
+      transition: opacity 0.6s;
     }
     #question-screen.visible { opacity: 1; pointer-events: all; }
 
-    /* Header Bar */
+    /* ── HEADER ── */
     .q-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 32px;
-      background: rgba(10,10,30,0.9);
+      padding: 12px 36px;
+      background: rgba(10,5,0,0.92);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      position: relative; z-index: 10;
+      flex-shrink: 0; position: relative; z-index: 10;
     }
-    .q-event-tag {
-      display: flex; align-items: center; gap: 10px;
+    .q-header::after {
+      content: '';
+      position: absolute; bottom: 0; left: 40px; right: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      opacity: 0.6;
     }
-    .event-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
+    .hdr-brand {
+      display: flex; align-items: center; gap: 12px;
     }
-    .event-name { font-size: 15px; font-weight: 700; }
-    .event-name span { color: var(--accent-cyan); }
+    .hdr-dragon { font-size: 24px; filter: drop-shadow(0 0 10px rgba(232,98,26,0.6)); }
+    .hdr-name {
+      font-family: 'Cinzel', serif;
+      font-size: 16px; font-weight: 700;
+      color: var(--parchment); letter-spacing: 1px;
+    }
+    .hdr-name span { color: var(--gold); }
 
-    .q-badge {
-      display: flex; align-items: center; gap: 8px;
-    }
+    .hdr-badges { display: flex; align-items: center; gap: 8px; }
     .badge {
       padding: 5px 14px;
-      border-radius: 20px;
-      font-size: 12px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 1px;
+      border-radius: 3px;
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2px;
     }
-    .badge-violet { background: rgba(157,78,221,0.15); border: 1px solid rgba(157,78,221,0.3); color: var(--accent-violet); }
-    .badge-cyan   { background: rgba(0,229,255,0.12);  border: 1px solid rgba(0,229,255,0.25);  color: var(--accent-cyan); }
-    .badge-lang   { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .badge-gold   { background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.28); color: var(--gold); }
+    .badge-crimson{ background: rgba(122,15,30,0.2);   border: 1px solid rgba(196,30,58,0.28);  color: var(--crimson); }
+    .badge-ash    { background: rgba(139,115,85,0.1);  border: 1px solid rgba(139,115,85,0.2);  color: var(--ash); font-family: 'JetBrains Mono', monospace; }
 
-    /* Timer Bar */
+    /* ── TIMER STRIP ── */
     .timer-strip {
       display: flex; align-items: center; gap: 20px;
-      padding: 10px 32px;
-      background: rgba(8,8,20,0.8);
+      padding: 10px 36px;
+      background: rgba(6,3,0,0.85);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .timer-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; }
+    .timer-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px; color: var(--ash);
+      text-transform: uppercase; letter-spacing: 3px;
+      flex-shrink: 0;
+    }
     .timer-clock {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 28px; font-weight: 600;
-      min-width: 90px;
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      font-family: 'Cinzel', serif;
+      font-size: 30px; font-weight: 900;
+      min-width: 100px;
+      background: linear-gradient(135deg, var(--gold-light), var(--ember));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
       transition: 0.3s;
     }
     .timer-clock.danger {
-      background: linear-gradient(135deg, var(--accent-amber), var(--accent-pink));
+      background: linear-gradient(135deg, var(--fire), var(--crimson));
       -webkit-background-clip: text; background-clip: text;
-      animation: clockPulse 1s infinite;
+      animation: clockDanger 0.8s ease-in-out infinite;
     }
-    @keyframes clockPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    @keyframes clockDanger { 0%,100%{opacity:1} 50%{opacity:0.55} }
     .timer-track {
       flex: 1; height: 8px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 4px; overflow: hidden;
+      background: rgba(201,162,39,0.07);
+      border-radius: 2px; overflow: hidden;
+      border: 1px solid rgba(201,162,39,0.1);
     }
     .timer-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
-      border-radius: 4px;
-      transition: width 1s linear, background 0.3s;
+      background: linear-gradient(90deg, var(--blood), var(--crimson), var(--ember), var(--gold));
+      border-radius: 2px;
+      transition: width 1s linear;
     }
-    .timer-fill.danger { background: linear-gradient(90deg, var(--accent-amber), var(--accent-pink)); }
-    .timer-pct { font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; flex-shrink:0; min-width: 40px; text-align:right; }
+    .timer-fill.danger {
+      background: linear-gradient(90deg, var(--blood), var(--crimson));
+      animation: dangerFill 0.8s ease-in-out infinite;
+    }
+    @keyframes dangerFill { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .timer-pct {
+      font-family: 'Cinzel', serif;
+      font-size: 12px; color: var(--ash);
+      min-width: 44px; text-align: right; flex-shrink: 0;
+    }
 
-    /* Main Content Area */
+    /* ── BODY ── */
     .q-body {
       flex: 1; display: flex; flex-direction: column;
       padding: 28px 40px;
-      overflow-y: auto;
-      gap: 20px;
+      overflow-y: auto; gap: 20px;
     }
     .q-body::-webkit-scrollbar { width: 4px; }
-    .q-body::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.3); border-radius: 2px; }
+    .q-body::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
 
-    /* Question Card */
+    /* ── QUESTION CARD ── */
     .q-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(157,78,221,0.2);
-      border-radius: var(--radius);
+      background: linear-gradient(180deg, #160b00 0%, #0e0600 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 0 40px rgba(157,78,221,0.08), 0 20px 60px rgba(0,0,0,0.5);
-      animation: cardSlide 0.5s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 0 50px rgba(201,162,39,0.06), 0 20px 60px rgba(0,0,0,0.7);
+      animation: cardReveal 0.55s cubic-bezier(0.34,1.3,0.64,1);
+      position: relative;
     }
-    @keyframes cardSlide {
-      from { opacity:0; transform: translateY(20px) scale(0.98); }
-      to   { opacity:1; transform: translateY(0) scale(1); }
+    /* Top fire border */
+    .q-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blood), var(--crimson), var(--ember), var(--gold), var(--ember), var(--crimson), var(--blood));
+      background-size: 200% auto;
+      animation: fireLine 4s linear infinite;
     }
+    @keyframes fireLine { 0%{background-position:0%} 100%{background-position:200%} }
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     .q-card-top {
       display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 24px 28px 20px;
+      padding: 28px 32px 22px;
       border-bottom: 1px solid var(--border);
-      background: linear-gradient(135deg, rgba(157,78,221,0.06), rgba(0,229,255,0.03));
+      background: rgba(201,162,39,0.03);
     }
     .q-number {
-      font-size: 12px; font-weight: 700;
-      color: var(--accent-cyan);
-      text-transform: uppercase; letter-spacing: 3px;
-      margin-bottom: 8px;
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase; letter-spacing: 4px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .q-number::before, .q-number::after {
+      content: ''; flex: none;
+      width: 20px; height: 1px;
+      background: var(--gold-dim);
     }
     .q-title {
-      font-size: 26px; font-weight: 800;
+      font-family: 'Cinzel', serif;
+      font-size: 28px; font-weight: 900;
+      color: var(--parchment);
       line-height: 1.2;
-    }
-    .q-title-wrap { flex: 1; }
-    .q-score-wrap {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
-      margin-left: 20px;
+      text-shadow: 0 2px 16px rgba(201,162,39,0.2);
     }
 
-    /* Code block */
-    .code-section { padding: 0; }
+    /* ── CODE BLOCK ── */
     .code-topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 20px;
-      background: rgba(0,0,0,0.3);
+      padding: 12px 24px;
+      background: rgba(0,0,0,0.5);
       border-bottom: 1px solid var(--border);
     }
-    .code-lang-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px; color: var(--accent-cyan);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .code-dots { display: flex; gap: 6px; }
+    .code-dots { display: flex; gap: 7px; }
     .code-dot { width: 12px; height: 12px; border-radius: 50%; }
     .code-dot:nth-child(1) { background: #ff5f57; }
     .code-dot:nth-child(2) { background: #febc2e; }
     .code-dot:nth-child(3) { background: #28c840; }
-
+    .code-lang-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px; color: var(--gold);
+      letter-spacing: 3px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .code-lang-label::before { content: '⚔'; font-size: 12px; }
     .code-wrapper {
-      padding: 0;
       overflow-x: auto;
     }
     .code-wrapper pre {
       margin: 0 !important;
       background: var(--bg-code) !important;
       border-radius: 0 !important;
-      padding: 24px 28px !important;
+      padding: 28px 32px !important;
       font-family: 'JetBrains Mono', monospace !important;
-      font-size: 15px !important;
-      line-height: 1.8 !important;
+      font-size: 16px !important;
+      line-height: 1.85 !important;
     }
     .code-wrapper code {
       font-family: 'JetBrains Mono', monospace !important;
-    }
-    /* Line numbers overlay */
-    .code-wrapper pre.line-numbers {
-      padding-left: 4em !important;
     }
 
     /* ─── FULLSCREEN OVERLAY ─── */
     #fullscreen-overlay {
       position: fixed; inset: 0;
-      background: rgba(3,3,13,0.97);
+      background: rgba(3,1,0,0.97);
       z-index: 9999;
       display: none;
       flex-direction: column;
@@ -296,123 +371,162 @@
     #fullscreen-overlay.show { display: flex; }
 
     .fs-icon {
-      font-size: 80px;
-      animation: fsShake 0.5s ease-in-out;
-      margin-bottom: 24px;
+      font-size: 80px; margin-bottom: 20px;
+      animation: fsAppear 0.4s ease;
+      filter: drop-shadow(0 0 30px rgba(196,30,58,0.7));
     }
-    @keyframes fsShake {
-      0%,100% { transform: rotate(0); }
-      25%      { transform: rotate(-10deg); }
-      75%      { transform: rotate(10deg); }
-    }
+    @keyframes fsAppear { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
     .fs-title {
-      font-size: 36px; font-weight: 800;
-      color: var(--accent-pink);
+      font-family: 'Cinzel', serif;
+      font-size: 34px; font-weight: 900;
+      color: var(--crimson);
       margin-bottom: 12px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 30px rgba(196,30,58,0.5);
     }
     .fs-sub {
-      font-size: 18px; color: var(--text-muted);
-      max-width: 480px; line-height: 1.6;
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 18px; color: var(--ash);
+      max-width: 500px; line-height: 1.7;
       margin-bottom: 36px;
     }
+    .fs-divider {
+      width: 200px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--crimson), transparent);
+      margin: 0 auto 28px;
+    }
     .fs-countdown {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 64px; font-weight: 700;
-      color: var(--accent-amber);
-      line-height: 1;
-      margin-bottom: 8px;
+      font-family: 'Cinzel', serif;
+      font-size: 72px; font-weight: 900;
+      background: linear-gradient(135deg, var(--gold-light), var(--ember));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1; margin-bottom: 8px;
     }
-    .fs-returning { font-size: 14px; color: var(--text-muted); }
+    .fs-returning {
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 14px; color: var(--ash);
+    }
     .fs-btn {
-      margin-top: 24px;
-      padding: 16px 40px;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border: none; border-radius: 14px;
-      color: #000; font-family: 'Outfit', sans-serif;
-      font-size: 17px; font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s;
+      margin-top: 28px; padding: 16px 44px;
+      background: linear-gradient(135deg, #7a0f1e, #c41e3a, #7a0f1e);
+      border: 1px solid rgba(196,30,58,0.5);
+      border-radius: 4px;
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; transition: 0.2s;
     }
-    .fs-btn:hover { opacity: 0.85; transform: scale(1.03); }
+    .fs-btn:hover { box-shadow: 0 0 32px rgba(196,30,58,0.5); transform: scale(1.03); }
 
-    /* ─── BROADCAST TOAST ─── */
+    /* ─── BROADCAST BANNER ─── */
     #broadcast-banner {
       position: fixed; top: 0; left: 0; right: 0;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      color: #000;
+      background: linear-gradient(135deg, #7a0f1e, var(--crimson), var(--ember), var(--gold-dim));
+      background-size: 200% auto;
+      color: var(--parchment);
       padding: 16px 32px;
-      font-size: 16px; font-weight: 700;
-      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 2px;
+      text-align: center; text-transform: uppercase;
       z-index: 8000;
       transform: translateY(-100%);
-      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      transition: transform 0.4s cubic-bezier(0.34,1.4,0.64,1);
+      border-bottom: 2px solid var(--gold);
     }
     #broadcast-banner.show { transform: translateY(0); }
 
     /* ─── TIME UP OVERLAY ─── */
     #timeup-overlay {
       position: fixed; inset: 0;
-      background: rgba(3,3,13,0.95);
+      background: rgba(3,0,0,0.96);
       z-index: 7000;
       display: none;
       flex-direction: column;
       align-items: center; justify-content: center;
       text-align: center;
     }
-    #timeup-overlay.show { display: flex; animation: fadeIn 0.5s ease; }
-    @keyframes fadeIn { from {opacity:0} to {opacity:1} }
-    .timeup-icon { font-size: 80px; margin-bottom: 16px; animation: bounce 1s ease infinite; }
-    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
-    .timeup-title { font-size: 52px; font-weight: 800; color: var(--accent-pink); margin-bottom: 10px; }
-    .timeup-sub   { font-size: 20px; color: var(--text-muted); }
-
-    /* ─── PRISM OVERRIDE ─── */
-    code[class*="language-"], pre[class*="language-"] {
-      text-shadow: none !important;
+    #timeup-overlay.show { display: flex; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .timeup-icon {
+      font-size: 90px; margin-bottom: 20px;
+      animation: timeupBounce 1s ease infinite;
+      filter: drop-shadow(0 0 30px rgba(196,30,58,0.8));
     }
-    /* selection block */
+    @keyframes timeupBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+    .timeup-title {
+      font-family: 'Cinzel', serif;
+      font-size: 56px; font-weight: 900;
+      background: linear-gradient(135deg, var(--fire), var(--crimson));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px; letter-spacing: 4px;
+    }
+    .timeup-sub {
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 20px; color: var(--ash);
+    }
+
+    /* Prism override */
+    code[class*="language-"], pre[class*="language-"] { text-shadow: none !important; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.4); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
   </style>
 </head>
 <body>
 
-<!-- Ambient Orbs -->
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
+<!-- Ambient orbs -->
+<div class="orb-fire-l"></div>
+<div class="orb-fire-r"></div>
 
-<!-- ─── FULLSCREEN LOCK OVERLAY ─── -->
+<!-- Corner ornaments -->
+<div class="corner-deco tl"></div>
+<div class="corner-deco tr"></div>
+<div class="corner-deco bl"></div>
+<div class="corner-deco br"></div>
+
+<!-- ─── FULLSCREEN LOCK ─── -->
 <div id="fullscreen-overlay">
-  <div class="fs-icon">🔒</div>
-  <div class="fs-title">Fullscreen Required</div>
-  <div class="fs-sub">This exam must be taken in fullscreen mode. Please return to fullscreen to continue.</div>
+  <div class="fs-icon">🐉</div>
+  <div class="fs-title">The Wall Must Hold</div>
+  <div class="fs-sub">"You shall not abandon your post. Return to fullscreen to continue the trial, or face the consequences."</div>
+  <div class="fs-divider"></div>
   <div class="fs-countdown" id="fs-countdown">3</div>
-  <div class="fs-returning">Returning to fullscreen automatically…</div>
-  <button class="fs-btn" onclick="enterFullscreen()">⛶ Go Fullscreen Now</button>
+  <div class="fs-returning">The gates reopen in…</div>
+  <button class="fs-btn" onclick="enterFullscreen()">⚔ &nbsp;Return to the Battle</button>
 </div>
 
-<!-- ─── TIME UP OVERLAY ─── -->
+<!-- ─── TIME UP ─── -->
 <div id="timeup-overlay">
-  <div class="timeup-icon">⏰</div>
-  <div class="timeup-title">Time's Up!</div>
-  <div class="timeup-sub">The admin will move to the next question.</div>
+  <div class="timeup-icon">⏳</div>
+  <div class="timeup-title">The Sand Has Fallen</div>
+  <div class="timeup-sub">"And now the night is come. The Maester shall unroll the next scroll."</div>
 </div>
 
 <!-- ─── BROADCAST BANNER ─── -->
-<div id="broadcast-banner" id="broadcast-banner">📢 <span id="broadcast-text"></span></div>
+<div id="broadcast-banner">📢 &nbsp;<span id="broadcast-text"></span></div>
 
 <!-- ─── WAITING SCREEN ─── -->
 <div id="waiting-screen">
-  <div class="wait-logo">🐛</div>
-  <div class="wait-event">Cebroid 2k26 — Debug Relay</div>
-  <div class="wait-title">Get Ready!</div>
-  <div class="wait-sub">The admin will start the session shortly.</div>
+  <div class="wait-dragon">🐉</div>
+  <div class="wait-event">Cebroid 2k26 &nbsp;·&nbsp; Debug Relay</div>
+  <div class="wait-title">The Great Trial</div>
+  <div class="wait-sub">"When you play the game of code, you win or you debug."</div>
+  <div class="wait-divider">
+    <div class="wait-divider-line"></div>
+    <div class="wait-divider-icon">⚔</div>
+    <div class="wait-divider-line"></div>
+  </div>
   <div class="wait-indicators">
     <div class="wait-dot"></div>
     <div class="wait-dot"></div>
     <div class="wait-dot"></div>
-    <span class="wait-text">Waiting for admin…</span>
+    <span class="wait-text">Awaiting the Maester…</span>
   </div>
 </div>
 
@@ -420,19 +534,19 @@
 <div id="question-screen">
   <!-- Header -->
   <div class="q-header">
-    <div class="q-event-tag">
-      <div class="event-icon">🐛</div>
-      <div class="event-name">Debug <span>Relay</span></div>
+    <div class="hdr-brand">
+      <div class="hdr-dragon">🔥</div>
+      <div class="hdr-name">Debug <span>Relay</span></div>
     </div>
-    <div class="q-badge">
-      <span class="badge badge-lang" id="hdr-lang">—</span>
-      <span class="badge badge-violet" id="hdr-qnum">Q 0 / 0</span>
+    <div class="hdr-badges">
+      <span class="badge badge-ash" id="hdr-lang">—</span>
+      <span class="badge badge-crimson" id="hdr-qnum">Q 0 / 0</span>
     </div>
   </div>
 
   <!-- Timer Strip -->
   <div class="timer-strip">
-    <div class="timer-label">Time Left</div>
+    <div class="timer-label">⏳ Time Remaining</div>
     <div class="timer-clock" id="p-timer-clock">--:--</div>
     <div class="timer-track">
       <div class="timer-fill" id="p-timer-fill" style="width:100%"></div>
@@ -443,28 +557,26 @@
   <!-- Body -->
   <div class="q-body">
     <div class="q-card" id="q-card">
-      <!-- Question Header -->
+      <!-- Question top -->
       <div class="q-card-top">
-        <div class="q-title-wrap">
-          <div class="q-number" id="q-num-label">QUESTION 1</div>
+        <div>
+          <div class="q-number" id="q-num-label">Trial I</div>
           <div class="q-title" id="q-title-text">Loading…</div>
         </div>
       </div>
 
-      <!-- Code Block -->
-      <div class="code-section">
-        <div class="code-topbar">
-          <div class="code-dots">
-            <div class="code-dot"></div>
-            <div class="code-dot"></div>
-            <div class="code-dot"></div>
-          </div>
-          <div class="code-lang-tag">⬤ <span id="code-lang-label">language</span></div>
-          <div style="width:60px;"></div>
+      <!-- Code block -->
+      <div class="code-topbar">
+        <div class="code-dots">
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
         </div>
-        <div class="code-wrapper">
-          <pre id="code-pre"><code id="code-block" class="language-c"></code></pre>
-        </div>
+        <div class="code-lang-label" id="code-lang-label">language</div>
+        <div style="width:60px;"></div>
+      </div>
+      <div class="code-wrapper">
+        <pre id="code-pre"><code id="code-block" class="language-c"></code></pre>
       </div>
     </div>
   </div>
@@ -481,53 +593,41 @@
 // ═══════════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════════
-const CHANNEL_NAME  = 'debug_relay';
-const STORAGE_KEY   = 'debug_relay_state';
+const CHANNEL_NAME = 'debug_relay';
+const STORAGE_KEY  = 'debug_relay_state';
 
 // ═══════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════
-let localState = null;
-let channel    = null;
-let fsRetryInterval   = null;
+let localState        = null;
+let channel           = null;
 let fsCountdownTimer  = null;
 let fsCountdownVal    = 3;
 let isFullscreen      = false;
-let timerInterval     = null;
 
 // ═══════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  // Setup BroadcastChannel
   try {
     channel = new BroadcastChannel(CHANNEL_NAME);
     channel.addEventListener('message', onChannelMessage);
   } catch(e) {}
 
-  // Storage event fallback for cross-tab sync
   window.addEventListener('storage', onStorageEvent);
 
-  // Load existing state
   loadAndApplyState();
 
-  // Fullscreen on load
-  setTimeout(() => enterFullscreen(), 800);
+  setTimeout(() => enterFullscreen(), 900);
 
-  // Monitor fullscreen changes
   document.addEventListener('fullscreenchange',       onFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   document.addEventListener('mozfullscreenchange',    onFullscreenChange);
   document.addEventListener('MSFullscreenChange',     onFullscreenChange);
 
-  // Block common exit keys
-  document.addEventListener('keydown', blockKeys);
-
-  // Prevent right-click
+  document.addEventListener('keydown',     blockKeys);
   document.addEventListener('contextmenu', e => e.preventDefault());
-
-  // Prevent copy
-  document.addEventListener('copy', e => e.preventDefault());
+  document.addEventListener('copy',        e => e.preventDefault());
 });
 
 // ═══════════════════════════════════════════════
@@ -540,7 +640,6 @@ function enterFullscreen() {
   else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
   else if (el.msRequestFullscreen)     el.msRequestFullscreen();
 }
-
 function onFullscreenChange() {
   isFullscreen = !!(
     document.fullscreenElement ||
@@ -548,27 +647,17 @@ function onFullscreenChange() {
     document.mozFullScreenElement ||
     document.msFullscreenElement
   );
-
-  const overlay = document.getElementById('fullscreen-overlay');
-  if (!isFullscreen) {
-    showFsOverlay();
-  } else {
-    hideFsOverlay();
-  }
+  if (!isFullscreen) showFsOverlay();
+  else hideFsOverlay();
 }
-
 function showFsOverlay() {
-  const overlay = document.getElementById('fullscreen-overlay');
-  overlay.classList.add('show');
+  document.getElementById('fullscreen-overlay').classList.add('show');
   startFsCountdown();
 }
-
 function hideFsOverlay() {
-  const overlay = document.getElementById('fullscreen-overlay');
-  overlay.classList.remove('show');
+  document.getElementById('fullscreen-overlay').classList.remove('show');
   clearFsCountdown();
 }
-
 function startFsCountdown() {
   clearFsCountdown();
   fsCountdownVal = 3;
@@ -582,30 +671,24 @@ function startFsCountdown() {
     }
   }, 1000);
 }
-
 function clearFsCountdown() {
   if (fsCountdownTimer) { clearInterval(fsCountdownTimer); fsCountdownTimer = null; }
 }
-
 function blockKeys(e) {
-  // Block F11, Escape, Alt+F4, Windows key combinations
   const blocked = [
-    e.key === 'Escape',
-    e.key === 'F11',
-    (e.altKey && e.key === 'F4'),
-    (e.metaKey),
-    (e.ctrlKey && ['w','W','t','T','n','N'].includes(e.key)),
+    e.key === 'Escape', e.key === 'F11',
+    e.altKey && e.key === 'F4', e.metaKey,
+    e.ctrlKey && ['w','W','t','T','n','N'].includes(e.key),
   ];
   if (blocked.some(Boolean)) {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     if (!isFullscreen) showFsOverlay();
     return false;
   }
 }
 
 // ═══════════════════════════════════════════════
-//  STATE SYNC
+//  SYNC
 // ═══════════════════════════════════════════════
 function loadAndApplyState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -613,16 +696,13 @@ function loadAndApplyState() {
     try { localState = JSON.parse(saved); applyState(); } catch(e) {}
   }
 }
-
 function onChannelMessage(event) {
   const { type, state, message } = event.data;
   if (state) localState = state;
-
   if (type === 'BROADCAST_MSG') showBroadcastBanner(message);
   else if (type === 'TIMER_END') showTimeUpOverlay();
   else applyState();
 }
-
 function onStorageEvent(event) {
   if (event.key === STORAGE_KEY) {
     try { localState = JSON.parse(event.newValue); applyState(); } catch(e) {}
@@ -641,57 +721,46 @@ function onStorageEvent(event) {
 // ═══════════════════════════════════════════════
 function applyState() {
   if (!localState) return;
-
-  const { questions, currentIndex, timerSeconds, timerTotal, timerRunning } = localState;
-
-  // Timer display (passive — admin drives ticks, we mirror)
+  const { questions, currentIndex, timerSeconds, timerTotal } = localState;
   updateTimer(timerSeconds, timerTotal);
-
-  // Show / hide screens
-  const hasQuestion = questions && questions.length > 0 && currentIndex >= 0 && currentIndex < questions.length;
+  const hasQuestion = questions && questions.length > 0
+    && currentIndex >= 0 && currentIndex < questions.length;
 
   if (hasQuestion) {
     showQuestion(questions[currentIndex], currentIndex, questions.length);
-    // Hide timeup if question changed
     document.getElementById('timeup-overlay').classList.remove('show');
   } else {
     showWaiting();
   }
 }
-
 function showWaiting() {
   document.getElementById('waiting-screen').classList.remove('hidden');
   document.getElementById('question-screen').classList.remove('visible');
 }
 
+const ORDINALS = ['I','II','III','IV','V','VI','VII','VIII','IX','X',
+  'XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+
 function showQuestion(q, idx, total) {
-  const ws = document.getElementById('waiting-screen');
-  const qs = document.getElementById('question-screen');
+  document.getElementById('waiting-screen').classList.add('hidden');
+  document.getElementById('question-screen').classList.add('visible');
 
-  ws.classList.add('hidden');
-  qs.classList.add('visible');
-
-  // Header
   document.getElementById('hdr-lang').textContent   = q.language.toUpperCase();
-  document.getElementById('hdr-qnum').textContent   = `Q ${idx + 1} / ${total}`;
-  document.getElementById('q-num-label').textContent = `QUESTION ${idx + 1} OF ${total}`;
+  document.getElementById('hdr-qnum').textContent   = `Trial ${idx + 1} / ${total}`;
+  document.getElementById('q-num-label').textContent = `Trial ${ORDINALS[idx] || (idx+1)}`;
   document.getElementById('q-title-text').textContent = q.title;
   document.getElementById('code-lang-label').textContent = q.language;
 
-  // Code
-  const codeEl = document.getElementById('code-block');
+  const codeEl  = document.getElementById('code-block');
   codeEl.className = `language-${q.language}`;
   codeEl.textContent = q.code;
   Prism.highlightElement(codeEl);
 
-  // Re-animate card
+  // Re-trigger card animation
   const card = document.getElementById('q-card');
   card.style.animation = 'none';
-  requestAnimationFrame(() => {
-    card.style.animation = '';
-  });
+  requestAnimationFrame(() => { card.style.animation = ''; });
 }
-
 function updateTimer(seconds, total) {
   if (seconds === undefined || seconds === null) return;
   const s   = Math.max(0, seconds);
@@ -704,36 +773,32 @@ function updateTimer(seconds, total) {
 
   clock.textContent = formatTime(s);
   clock.classList.toggle('danger', isDanger);
-  fill.style.width  = pct + '%';
+  fill.style.width = pct + '%';
   fill.classList.toggle('danger', isDanger);
   pctEl.textContent = pct + '%';
 }
 
 // ═══════════════════════════════════════════════
-//  BROADCAST BANNER
+//  BROADCAST
 // ═══════════════════════════════════════════════
 function showBroadcastBanner(msg) {
   if (!msg) return;
   const banner = document.getElementById('broadcast-banner');
   document.getElementById('broadcast-text').textContent = msg;
   banner.classList.add('show');
-  setTimeout(() => banner.classList.remove('show'), 5000);
+  setTimeout(() => banner.classList.remove('show'), 5500);
 }
-
-// ═══════════════════════════════════════════════
-//  TIME UP
-// ═══════════════════════════════════════════════
 function showTimeUpOverlay() {
   document.getElementById('timeup-overlay').classList.add('show');
-  setTimeout(() => document.getElementById('timeup-overlay').classList.remove('show'), 4000);
+  setTimeout(() => document.getElementById('timeup-overlay').classList.remove('show'), 5000);
 }
 
 // ═══════════════════════════════════════════════
-//  UTILITIES
+//  UTILS
 // ═══════════════════════════════════════════════
 function formatTime(s) {
   if (isNaN(s) || s < 0) s = 0;
-  const m = Math.floor(s / 60).toString().padStart(2,'0');
+  const m   = Math.floor(s / 60).toString().padStart(2,'0');
   const sec = (s % 60).toString().padStart(2,'0');
   return `${m}:${sec}`;
 }
