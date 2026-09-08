@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Debug Relay — Participant View</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:   #03030d;
+      --bg-card:      #0a0a1e;
+      --bg-code:      #080818;
+      --accent-cyan:  #00e5ff;
+      --accent-violet:#9d4edd;
+      --accent-pink:  #f72585;
+      --accent-green: #06ffa5;
+      --accent-amber: #ffd60a;
+      --text-primary: #e8eaf6;
+      --text-muted:   #6b6e8e;
+      --border:       rgba(255,255,255,0.07);
+      --radius:       20px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ─── ANIMATED GRID BG ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(157,78,221,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(157,78,221,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Ambient orbs */
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(100px); pointer-events: none; z-index: 0;
+    }
+    .orb-1 { width:500px;height:500px; background:radial-gradient(circle,rgba(157,78,221,0.18) 0%,transparent 70%); top:-150px;left:-150px; }
+    .orb-2 { width:400px;height:400px; background:radial-gradient(circle,rgba(0,229,255,0.12) 0%,transparent 70%); bottom:-100px;right:-100px; }
+    .orb-3 { width:300px;height:300px; background:radial-gradient(circle,rgba(247,37,133,0.08) 0%,transparent 70%); top:50%;right:10%; }
+
+    /* ─── WAITING / IDLE SCREEN ─── */
+    #waiting-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 50; text-align: center;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    #waiting-screen.hidden { opacity:0; pointer-events:none; transform: scale(1.02); }
+
+    .wait-logo {
+      width: 100px; height: 100px;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      border-radius: 28px;
+      margin: 0 auto 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+      box-shadow: 0 0 60px rgba(157,78,221,0.4);
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+    .wait-event {
+      font-size: 13px; font-weight: 600; letter-spacing: 4px;
+      text-transform: uppercase; color: var(--accent-violet);
+      margin-bottom: 12px;
+    }
+    .wait-title {
+      font-size: 44px; font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 12px;
+    }
+    .wait-sub {
+      font-size: 18px; color: var(--text-muted); margin-bottom: 48px;
+    }
+    .wait-indicators {
+      display: flex; align-items: center; gap: 16px;
+      background: rgba(13,13,30,0.8);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 14px 28px;
+    }
+    .wait-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent-violet);
+      animation: waitPulse 1.4s ease-in-out infinite;
+    }
+    .wait-dot:nth-child(2) { animation-delay: 0.2s; }
+    .wait-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes waitPulse {
+      0%,80%,100% { transform: scale(0.6); opacity: 0.4; }
+      40%          { transform: scale(1); opacity: 1; }
+    }
+    .wait-text { font-size: 15px; color: var(--text-muted); }
+
+    /* ─── QUESTION SCREEN ─── */
+    #question-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      z-index: 40;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    #question-screen.visible { opacity: 1; pointer-events: all; }
+
+    /* Header Bar */
+    .q-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 32px;
+      background: rgba(10,10,30,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative; z-index: 10;
+    }
+    .q-event-tag {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .event-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .event-name { font-size: 15px; font-weight: 700; }
+    .event-name span { color: var(--accent-cyan); }
+
+    .q-badge {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .badge {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .badge-violet { background: rgba(157,78,221,0.15); border: 1px solid rgba(157,78,221,0.3); color: var(--accent-violet); }
+    .badge-cyan   { background: rgba(0,229,255,0.12);  border: 1px solid rgba(0,229,255,0.25);  color: var(--accent-cyan); }
+    .badge-lang   { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+    /* Timer Bar */
+    .timer-strip {
+      display: flex; align-items: center; gap: 20px;
+      padding: 10px 32px;
+      background: rgba(8,8,20,0.8);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .timer-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; }
+    .timer-clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px; font-weight: 600;
+      min-width: 90px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: 0.3s;
+    }
+    .timer-clock.danger {
+      background: linear-gradient(135deg, var(--accent-amber), var(--accent-pink));
+      -webkit-background-clip: text; background-clip: text;
+      animation: clockPulse 1s infinite;
+    }
+    @keyframes clockPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .timer-track {
+      flex: 1; height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px; overflow: hidden;
+    }
+    .timer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+      border-radius: 4px;
+      transition: width 1s linear, background 0.3s;
+    }
+    .timer-fill.danger { background: linear-gradient(90deg, var(--accent-amber), var(--accent-pink)); }
+    .timer-pct { font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; flex-shrink:0; min-width: 40px; text-align:right; }
+
+    /* Main Content Area */
+    .q-body {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 28px 40px;
+      overflow-y: auto;
+      gap: 20px;
+    }
+    .q-body::-webkit-scrollbar { width: 4px; }
+    .q-body::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.3); border-radius: 2px; }
+
+    /* Question Card */
+    .q-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(157,78,221,0.2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(157,78,221,0.08), 0 20px 60px rgba(0,0,0,0.5);
+      animation: cardSlide 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes cardSlide {
+      from { opacity:0; transform: translateY(20px) scale(0.98); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+    .q-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(157,78,221,0.06), rgba(0,229,255,0.03));
+    }
+    .q-number {
+      font-size: 12px; font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase; letter-spacing: 3px;
+      margin-bottom: 8px;
+    }
+    .q-title {
+      font-size: 26px; font-weight: 800;
+      line-height: 1.2;
+    }
+    .q-title-wrap { flex: 1; }
+    .q-score-wrap {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+      margin-left: 20px;
+    }
+
+    /* Code block */
+    .code-section { padding: 0; }
+    .code-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; color: var(--accent-cyan);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .code-dots { display: flex; gap: 6px; }
+    .code-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .code-dot:nth-child(1) { background: #ff5f57; }
+    .code-dot:nth-child(2) { background: #febc2e; }
+    .code-dot:nth-child(3) { background: #28c840; }
+
+    .code-wrapper {
+      padding: 0;
+      overflow-x: auto;
+    }
+    .code-wrapper pre {
+      margin: 0 !important;
+      background: var(--bg-code) !important;
+      border-radius: 0 !important;
+      padding: 24px 28px !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 15px !important;
+      line-height: 1.8 !important;
+    }
+    .code-wrapper code {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    /* Line numbers overlay */
+    .code-wrapper pre.line-numbers {
+      padding-left: 4em !important;
+    }
+
+    /* ─── FULLSCREEN OVERLAY ─── */
+    #fullscreen-overlay {
+      position: fixed; inset: 0;
+      background: rgba(3,3,13,0.97);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      backdrop-filter: blur(20px);
+    }
+    #fullscreen-overlay.show { display: flex; }
+
+    .fs-icon {
+      font-size: 80px;
+      animation: fsShake 0.5s ease-in-out;
+      margin-bottom: 24px;
+    }
+    @keyframes fsShake {
+      0%,100% { transform: rotate(0); }
+      25%      { transform: rotate(-10deg); }
+      75%      { transform: rotate(10deg); }
+    }
+    .fs-title {
+      font-size: 36px; font-weight: 800;
+      color: var(--accent-pink);
+      margin-bottom: 12px;
+    }
+    .fs-sub {
+      font-size: 18px; color: var(--text-muted);
+      max-width: 480px; line-height: 1.6;
+      margin-bottom: 36px;
+    }
+    .fs-countdown {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 64px; font-weight: 700;
+      color: var(--accent-amber);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .fs-returning { font-size: 14px; color: var(--text-muted); }
+    .fs-btn {
+      margin-top: 24px;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      border: none; border-radius: 14px;
+      color: #000; font-family: 'Outfit', sans-serif;
+      font-size: 17px; font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .fs-btn:hover { opacity: 0.85; transform: scale(1.03); }
+
+    /* ─── BROADCAST TOAST ─── */
+    #broadcast-banner {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      color: #000;
+      padding: 16px 32px;
+      font-size: 16px; font-weight: 700;
+      text-align: center;
+      z-index: 8000;
+      transform: translateY(-100%);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #broadcast-banner.show { transform: translateY(0); }
+
+    /* ─── TIME UP OVERLAY ─── */
+    #timeup-overlay {
+      position: fixed; inset: 0;
+      background: rgba(3,3,13,0.95);
+      z-index: 7000;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+    }
+    #timeup-overlay.show { display: flex; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+    .timeup-icon { font-size: 80px; margin-bottom: 16px; animation: bounce 1s ease infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+    .timeup-title { font-size: 52px; font-weight: 800; color: var(--accent-pink); margin-bottom: 10px; }
+    .timeup-sub   { font-size: 20px; color: var(--text-muted); }
+
+    /* ─── PRISM OVERRIDE ─── */
+    code[class*="language-"], pre[class*="language-"] {
+      text-shadow: none !important;
+    }
+    /* selection block */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.4); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Ambient Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- ─── FULLSCREEN LOCK OVERLAY ─── -->
+<div id="fullscreen-overlay">
+  <div class="fs-icon">🔒</div>
+  <div class="fs-title">Fullscreen Required</div>
+  <div class="fs-sub">This exam must be taken in fullscreen mode. Please return to fullscreen to continue.</div>
+  <div class="fs-countdown" id="fs-countdown">3</div>
+  <div class="fs-returning">Returning to fullscreen automatically…</div>
+  <button class="fs-btn" onclick="enterFullscreen()">⛶ Go Fullscreen Now</button>
+</div>
+
+<!-- ─── TIME UP OVERLAY ─── -->
+<div id="timeup-overlay">
+  <div class="timeup-icon">⏰</div>
+  <div class="timeup-title">Time's Up!</div>
+  <div class="timeup-sub">The admin will move to the next question.</div>
+</div>
+
+<!-- ─── BROADCAST BANNER ─── -->
+<div id="broadcast-banner" id="broadcast-banner">📢 <span id="broadcast-text"></span></div>
+
+<!-- ─── WAITING SCREEN ─── -->
+<div id="waiting-screen">
+  <div class="wait-logo">🐛</div>
+  <div class="wait-event">Cebroid 2k26 — Debug Relay</div>
+  <div class="wait-title">Get Ready!</div>
+  <div class="wait-sub">The admin will start the session shortly.</div>
+  <div class="wait-indicators">
+    <div class="wait-dot"></div>
+    <div class="wait-dot"></div>
+    <div class="wait-dot"></div>
+    <span class="wait-text">Waiting for admin…</span>
+  </div>
+</div>
+
+<!-- ─── QUESTION SCREEN ─── -->
+<div id="question-screen">
+  <!-- Header -->
+  <div class="q-header">
+    <div class="q-event-tag">
+      <div class="event-icon">🐛</div>
+      <div class="event-name">Debug <span>Relay</span></div>
+    </div>
+    <div class="q-badge">
+      <span class="badge badge-lang" id="hdr-lang">—</span>
+      <span class="badge badge-violet" id="hdr-qnum">Q 0 / 0</span>
+    </div>
+  </div>
+
+  <!-- Timer Strip -->
+  <div class="timer-strip">
+    <div class="timer-label">Time Left</div>
+    <div class="timer-clock" id="p-timer-clock">--:--</div>
+    <div class="timer-track">
+      <div class="timer-fill" id="p-timer-fill" style="width:100%"></div>
+    </div>
+    <div class="timer-pct" id="p-timer-pct">100%</div>
+  </div>
+
+  <!-- Body -->
+  <div class="q-body">
+    <div class="q-card" id="q-card">
+      <!-- Question Header -->
+      <div class="q-card-top">
+        <div class="q-title-wrap">
+          <div class="q-number" id="q-num-label">QUESTION 1</div>
+          <div class="q-title" id="q-title-text">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Code Block -->
+      <div class="code-section">
+        <div class="code-topbar">
+          <div class="code-dots">
+            <div class="code-dot"></div>
+            <div class="code-dot"></div>
+            <div class="code-dot"></div>
+          </div>
+          <div class="code-lang-tag">⬤ <span id="code-lang-label">language</span></div>
+          <div style="width:60px;"></div>
+        </div>
+        <div class="code-wrapper">
+          <pre id="code-pre"><code id="code-block" class="language-c"></code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════
+const CHANNEL_NAME  = 'debug_relay';
+const STORAGE_KEY   = 'debug_relay_state';
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let localState = null;
+let channel    = null;
+let fsRetryInterval   = null;
+let fsCountdownTimer  = null;
+let fsCountdownVal    = 3;
+let isFullscreen      = false;
+let timerInterval     = null;
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Setup BroadcastChannel
+  try {
+    channel = new BroadcastChannel(CHANNEL_NAME);
+    channel.addEventListener('message', onChannelMessage);
+  } catch(e) {}
+
+  // Storage event fallback for cross-tab sync
+  window.addEventListener('storage', onStorageEvent);
+
+  // Load existing state
+  loadAndApplyState();
+
+  // Fullscreen on load
+  setTimeout(() => enterFullscreen(), 800);
+
+  // Monitor fullscreen changes
+  document.addEventListener('fullscreenchange',       onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  document.addEventListener('mozfullscreenchange',    onFullscreenChange);
+  document.addEventListener('MSFullscreenChange',     onFullscreenChange);
+
+  // Block common exit keys
+  document.addEventListener('keydown', blockKeys);
+
+  // Prevent right-click
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Prevent copy
+  document.addEventListener('copy', e => e.preventDefault());
+});
+
+// ═══════════════════════════════════════════════
+//  FULLSCREEN ENFORCEMENT
+// ═══════════════════════════════════════════════
+function enterFullscreen() {
+  const el = document.documentElement;
+  if      (el.requestFullscreen)       el.requestFullscreen().catch(() => showFsOverlay());
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
+  else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+}
+
+function onFullscreenChange() {
+  isFullscreen = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+
+  const overlay = document.getElementById('fullscreen-overlay');
+  if (!isFullscreen) {
+    showFsOverlay();
+  } else {
+    hideFsOverlay();
+  }
+}
+
+function showFsOverlay() {
+  const overlay = document.getElementById('fullscreen-overlay');
+  overlay.classList.add('show');
+  startFsCountdown();
+}
+
+function hideFsOverlay() {
+  const overlay = document.getElementById('fullscreen-overlay');
+  overlay.classList.remove('show');
+  clearFsCountdown();
+}
+
+function startFsCountdown() {
+  clearFsCountdown();
+  fsCountdownVal = 3;
+  document.getElementById('fs-countdown').textContent = fsCountdownVal;
+  fsCountdownTimer = setInterval(() => {
+    fsCountdownVal--;
+    document.getElementById('fs-countdown').textContent = Math.max(0, fsCountdownVal);
+    if (fsCountdownVal <= 0) {
+      clearFsCountdown();
+      enterFullscreen();
+    }
+  }, 1000);
+}
+
+function clearFsCountdown() {
+  if (fsCountdownTimer) { clearInterval(fsCountdownTimer); fsCountdownTimer = null; }
+}
+
+function blockKeys(e) {
+  // Block F11, Escape, Alt+F4, Windows key combinations
+  const blocked = [
+    e.key === 'Escape',
+    e.key === 'F11',
+    (e.altKey && e.key === 'F4'),
+    (e.metaKey),
+    (e.ctrlKey && ['w','W','t','T','n','N'].includes(e.key)),
+  ];
+  if (blocked.some(Boolean)) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isFullscreen) showFsOverlay();
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  STATE SYNC
+// ═══════════════════════════════════════════════
+function loadAndApplyState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try { localState = JSON.parse(saved); applyState(); } catch(e) {}
+  }
+}
+
+function onChannelMessage(event) {
+  const { type, state, message } = event.data;
+  if (state) localState = state;
+
+  if (type === 'BROADCAST_MSG') showBroadcastBanner(message);
+  else if (type === 'TIMER_END') showTimeUpOverlay();
+  else applyState();
+}
+
+function onStorageEvent(event) {
+  if (event.key === STORAGE_KEY) {
+    try { localState = JSON.parse(event.newValue); applyState(); } catch(e) {}
+  }
+  if (event.key === STORAGE_KEY + '_event') {
+    try {
+      const ev = JSON.parse(event.newValue);
+      if (ev.type === 'BROADCAST_MSG') showBroadcastBanner(ev.message);
+      if (ev.type === 'TIMER_END') showTimeUpOverlay();
+    } catch(e) {}
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function applyState() {
+  if (!localState) return;
+
+  const { questions, currentIndex, timerSeconds, timerTotal, timerRunning } = localState;
+
+  // Timer display (passive — admin drives ticks, we mirror)
+  updateTimer(timerSeconds, timerTotal);
+
+  // Show / hide screens
+  const hasQuestion = questions && questions.length > 0 && currentIndex >= 0 && currentIndex < questions.length;
+
+  if (hasQuestion) {
+    showQuestion(questions[currentIndex], currentIndex, questions.length);
+    // Hide timeup if question changed
+    document.getElementById('timeup-overlay').classList.remove('show');
+  } else {
+    showWaiting();
+  }
+}
+
+function showWaiting() {
+  document.getElementById('waiting-screen').classList.remove('hidden');
+  document.getElementById('question-screen').classList.remove('visible');
+}
+
+function showQuestion(q, idx, total) {
+  const ws = document.getElementById('waiting-screen');
+  const qs = document.getElementById('question-screen');
+
+  ws.classList.add('hidden');
+  qs.classList.add('visible');
+
+  // Header
+  document.getElementById('hdr-lang').textContent   = q.language.toUpperCase();
+  document.getElementById('hdr-qnum').textContent   = `Q ${idx + 1} / ${total}`;
+  document.getElementById('q-num-label').textContent = `QUESTION ${idx + 1} OF ${total}`;
+  document.getElementById('q-title-text').textContent = q.title;
+  document.getElementById('code-lang-label').textContent = q.language;
+
+  // Code
+  const codeEl = document.getElementById('code-block');
+  codeEl.className = `language-${q.language}`;
+  codeEl.textContent = q.code;
+  Prism.highlightElement(codeEl);
+
+  // Re-animate card
+  const card = document.getElementById('q-card');
+  card.style.animation = 'none';
+  requestAnimationFrame(() => {
+    card.style.animation = '';
+  });
+}
+
+function updateTimer(seconds, total) {
+  if (seconds === undefined || seconds === null) return;
+  const s   = Math.max(0, seconds);
+  const pct = total > 0 ? Math.round((s / total) * 100) : 100;
+  const isDanger = s <= 30 && total > 0;
+
+  const clock = document.getElementById('p-timer-clock');
+  const fill  = document.getElementById('p-timer-fill');
+  const pctEl = document.getElementById('p-timer-pct');
+
+  clock.textContent = formatTime(s);
+  clock.classList.toggle('danger', isDanger);
+  fill.style.width  = pct + '%';
+  fill.classList.toggle('danger', isDanger);
+  pctEl.textContent = pct + '%';
+}
+
+// ═══════════════════════════════════════════════
+//  BROADCAST BANNER
+// ═══════════════════════════════════════════════
+function showBroadcastBanner(msg) {
+  if (!msg) return;
+  const banner = document.getElementById('broadcast-banner');
+  document.getElementById('broadcast-text').textContent = msg;
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 5000);
+}
+
+// ═══════════════════════════════════════════════
+//  TIME UP
+// ═══════════════════════════════════════════════
+function showTimeUpOverlay() {
+  document.getElementById('timeup-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('timeup-overlay').classList.remove('show'), 4000);
+}
+
+// ═══════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════
+function formatTime(s) {
+  if (isNaN(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60).toString().padStart(2,'0');
+  const sec = (s % 60).toString().padStart(2,'0');
+  return `${m}:${sec}`;
+}
+</script>
+</body>
+</html>

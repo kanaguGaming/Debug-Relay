@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Debug Relay — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:   #05050f;
+      --bg-secondary: #0d0d1e;
+      --bg-card:      #111128;
+      --bg-input:     #0a0a1c;
+      --accent-cyan:  #00e5ff;
+      --accent-violet:#9d4edd;
+      --accent-pink:  #f72585;
+      --accent-green: #06ffa5;
+      --accent-amber: #ffd60a;
+      --text-primary: #e8eaf6;
+      --text-muted:   #7c7f9e;
+      --border:       rgba(255,255,255,0.07);
+      --glow-cyan:    0 0 24px rgba(0,229,255,0.25);
+      --glow-violet:  0 0 24px rgba(157,78,221,0.25);
+      --radius:       16px;
+      --transition:   0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ─── BACKGROUND ORBS ─── */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(157,78,221,0.15) 0%, transparent 70%);
+      top: -200px; left: -200px;
+    }
+    body::after {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(0,229,255,0.10) 0%, transparent 70%);
+      bottom: -150px; right: -150px;
+    }
+
+    /* ─── LOGIN SCREEN ─── */
+    #login-screen {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      background: radial-gradient(ellipse at center, #0d0d2b 0%, #05050f 100%);
+    }
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(157,78,221,0.35);
+      border-radius: 24px;
+      padding: 48px 56px;
+      width: 420px;
+      text-align: center;
+      box-shadow: var(--glow-violet), 0 32px 64px rgba(0,0,0,0.6);
+      animation: loginAppear 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes loginAppear {
+      from { opacity: 0; transform: scale(0.85) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .login-logo {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      border-radius: 20px;
+      margin: 0 auto 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      box-shadow: var(--glow-violet);
+    }
+    .login-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    .login-sub   { color: var(--text-muted); font-size: 14px; margin-bottom: 36px; }
+    .login-input {
+      width: 100%; padding: 14px 18px;
+      background: var(--bg-input);
+      border: 1px solid rgba(157,78,221,0.3);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      letter-spacing: 8px;
+      text-align: center;
+      outline: none;
+      transition: var(--transition);
+      margin-bottom: 20px;
+    }
+    .login-input:focus {
+      border-color: var(--accent-violet);
+      box-shadow: var(--glow-violet);
+    }
+    .login-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      border: none; border-radius: 12px;
+      color: #000; font-family: 'Outfit', sans-serif;
+      font-size: 16px; font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .login-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .login-error {
+      color: var(--accent-pink); font-size: 13px;
+      margin-top: 12px; min-height: 18px;
+    }
+
+    /* ─── APP LAYOUT ─── */
+    #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
+
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(13,13,30,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-bar-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .brand-name { font-size: 18px; font-weight: 700; }
+    .brand-name span { color: var(--accent-cyan); }
+
+    .top-bar-status {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(6,255,165,0.1);
+      border: 1px solid rgba(6,255,165,0.25);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px; color: var(--accent-green);
+      font-weight: 500;
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+
+    .logout-btn {
+      background: rgba(247,37,133,0.12);
+      border: 1px solid rgba(247,37,133,0.3);
+      border-radius: 10px;
+      color: var(--accent-pink);
+      padding: 8px 16px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .logout-btn:hover { background: rgba(247,37,133,0.2); }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      padding: 28px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title .icon { font-size: 18px; }
+
+    /* ─── LIVE CONTROL ─── */
+    .live-control-card {
+      background: linear-gradient(135deg, rgba(17,17,40,0.9), rgba(13,13,30,0.9));
+      border: 1px solid rgba(0,229,255,0.2);
+      box-shadow: var(--glow-cyan);
+    }
+
+    .current-q-display {
+      background: var(--bg-input);
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .current-q-display::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+    }
+    .current-q-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--accent-cyan);
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .current-q-title {
+      font-size: 18px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .current-q-num {
+      font-size: 13px; color: var(--text-muted);
+    }
+
+    /* Timer */
+    .timer-section { margin-bottom: 20px; }
+    .timer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 52px; font-weight: 600;
+      text-align: center;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 12px;
+      transition: color 0.3s;
+    }
+    .timer-display.danger {
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-amber));
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: timerPulse 1s infinite;
+    }
+    @keyframes timerPulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.6; }
+    }
+    .timer-progress {
+      height: 6px; border-radius: 3px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden; margin-bottom: 16px;
+    }
+    .timer-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+      border-radius: 3px;
+      transition: width 1s linear, background 0.3s;
+    }
+    .timer-bar.danger {
+      background: linear-gradient(90deg, var(--accent-amber), var(--accent-pink));
+    }
+    .timer-controls {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 8px;
+    }
+    .timer-input-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .timer-input-row label {
+      font-size: 13px; color: var(--text-muted); flex-shrink: 0;
+    }
+    .timer-input {
+      flex: 1; padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      outline: none;
+    }
+    .timer-input:focus { border-color: var(--accent-cyan); }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 16px;
+      border: none; border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      color: #000;
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.10); }
+    .btn-success {
+      background: rgba(6,255,165,0.15);
+      border: 1px solid rgba(6,255,165,0.3);
+      color: var(--accent-green);
+    }
+    .btn-danger {
+      background: rgba(247,37,133,0.15);
+      border: 1px solid rgba(247,37,133,0.3);
+      color: var(--accent-pink);
+    }
+    .btn-warning {
+      background: rgba(255,214,10,0.15);
+      border: 1px solid rgba(255,214,10,0.3);
+      color: var(--accent-amber);
+    }
+    .btn-violet {
+      background: rgba(157,78,221,0.2);
+      border: 1px solid rgba(157,78,221,0.35);
+      color: var(--accent-violet);
+    }
+    .btn-full { width: 100%; }
+
+    /* Nav Controls */
+    .nav-controls {
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      gap: 8px; margin-bottom: 16px;
+    }
+    .q-counter {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px; font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    /* Broadcast */
+    .broadcast-section { border-top: 1px solid var(--border); padding-top: 16px; }
+    .broadcast-row { display: flex; gap: 8px; }
+    .broadcast-input {
+      flex: 1; padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px; outline: none;
+    }
+    .broadcast-input:focus { border-color: var(--accent-violet); }
+
+    /* ─── QUESTION LIST ─── */
+    .questions-panel { display: flex; flex-direction: column; gap: 16px; }
+
+    .q-list { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+    .q-list::-webkit-scrollbar { width: 4px; }
+    .q-list::-webkit-scrollbar-track { background: transparent; }
+    .q-list::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.4); border-radius: 2px; }
+
+    .q-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .q-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: transparent;
+      transition: var(--transition);
+    }
+    .q-item:hover { border-color: rgba(157,78,221,0.3); background: rgba(17,17,40,0.9); }
+    .q-item:hover::before { background: var(--accent-violet); }
+    .q-item.active { border-color: rgba(0,229,255,0.35); background: rgba(0,229,255,0.06); }
+    .q-item.active::before { background: var(--accent-cyan); }
+
+    .q-num {
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 600;
+      flex-shrink: 0;
+    }
+    .q-item.active .q-num {
+      background: rgba(0,229,255,0.15);
+      color: var(--accent-cyan);
+    }
+    .q-info { flex: 1; min-width: 0; }
+    .q-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-lang {
+      font-size: 11px; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .q-actions { display: flex; gap: 4px; opacity: 0; transition: var(--transition); }
+    .q-item:hover .q-actions { opacity: 1; }
+    .q-action-btn {
+      width: 28px; height: 28px;
+      border: none; border-radius: 6px;
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .q-action-btn.edit { background: rgba(157,78,221,0.15); color: var(--accent-violet); }
+    .q-action-btn.edit:hover { background: rgba(157,78,221,0.3); }
+    .q-action-btn.delete { background: rgba(247,37,133,0.15); color: var(--accent-pink); }
+    .q-action-btn.delete:hover { background: rgba(247,37,133,0.3); }
+
+    /* ─── EDITOR MODAL ─── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,5,15,0.85);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500;
+      opacity: 0; pointer-events: none;
+      transition: var(--transition);
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid rgba(157,78,221,0.3);
+      border-radius: 20px;
+      padding: 32px;
+      width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--glow-violet), 0 40px 80px rgba(0,0,0,0.7);
+      transform: scale(0.95) translateY(10px);
+      transition: var(--transition);
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 10px; }
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: var(--transition);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent-violet);
+      box-shadow: 0 0 0 3px rgba(157,78,221,0.1);
+    }
+    .form-select { cursor: pointer; }
+    .form-select option { background: var(--bg-card); }
+    .form-textarea {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 200px;
+      line-height: 1.6;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ─── TOAST ─── */
+    .toast-container {
+      position: fixed; bottom: 28px; right: 28px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 9999;
+    }
+    .toast {
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px; font-weight: 500;
+      backdrop-filter: blur(12px);
+      animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 320px;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(40px) scale(0.9); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    .toast.success { background: rgba(6,255,165,0.15); border: 1px solid rgba(6,255,165,0.3); color: var(--accent-green); }
+    .toast.info    { background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.25); color: var(--accent-cyan); }
+    .toast.error   { background: rgba(247,37,133,0.15); border: 1px solid rgba(247,37,133,0.3); color: var(--accent-pink); }
+
+    /* ─── STATS ROW ─── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 28px; font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-val.cyan   { color: var(--accent-cyan); }
+    .stat-val.violet { color: var(--accent-violet); }
+    .stat-val.green  { color: var(--accent-green); }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.3); border-radius: 3px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1100px) {
+      .main-content { grid-template-columns: 1fr; }
+    }
+
+    /* participant link banner */
+    .link-banner {
+      background: rgba(0,229,255,0.07);
+      border: 1px solid rgba(0,229,255,0.18);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13px;
+    }
+    .link-url {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+      word-break: break-all;
+    }
+    .copy-btn {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      background: rgba(0,229,255,0.15);
+      border: 1px solid rgba(0,229,255,0.25);
+      border-radius: 8px;
+      color: var(--accent-cyan);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .copy-btn:hover { background: rgba(0,229,255,0.25); }
+  </style>
+</head>
+<body>
+
+<!-- ─── LOGIN ─── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🛡️</div>
+    <div class="login-title">Admin Access</div>
+    <div class="login-sub">Debug Relay — Cebroid 2k26</div>
+    <input id="pin-input" class="login-input" type="password" maxlength="12"
+           placeholder="••••••••" autocomplete="off" />
+    <button class="login-btn" onclick="tryLogin()">Unlock Panel</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ─── MAIN APP ─── -->
+<div id="app">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <div class="brand-icon">🐛</div>
+      <div class="brand-name">Debug <span>Relay</span> <small style="font-weight:400;font-size:12px;color:var(--text-muted);margin-left:6px;">Admin Panel</small></div>
+    </div>
+    <div class="top-bar-status">
+      <div class="status-dot"></div>
+      Live Session Active
+    </div>
+    <button class="logout-btn" onclick="logout()">⏻ Logout</button>
+  </div>
+
+  <div class="main-content">
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val cyan" id="stat-total">0</div>
+          <div class="stat-label">Questions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val violet" id="stat-current">—</div>
+          <div class="stat-label">Current Q</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val green" id="stat-timer">—</div>
+          <div class="stat-label">Timer</div>
+        </div>
+      </div>
+
+      <!-- Participant Link -->
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🔗</span> Participant Page Link</div>
+        </div>
+        <div class="link-banner">
+          <div class="link-url" id="participant-link-url"></div>
+          <button class="copy-btn" onclick="copyParticipantLink()">📋 Copy</button>
+          <a id="open-participant-btn" href="participant.html" target="_blank">
+            <button class="copy-btn" style="background:rgba(157,78,221,0.15);border-color:rgba(157,78,221,0.3);color:var(--accent-violet);">🚀 Open</button>
+          </a>
+        </div>
+      </div>
+
+      <!-- Question Editor -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📝</span> Question Bank</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" onclick="exportQuestions()" style="font-size:12px;">⬇ Export</button>
+            <label class="btn btn-ghost" style="font-size:12px;cursor:pointer;">
+              ⬆ Import
+              <input type="file" accept=".json" style="display:none" onchange="importQuestions(event)">
+            </label>
+            <button class="btn btn-primary" onclick="openEditor(null)">+ Add Question</button>
+          </div>
+        </div>
+        <div class="q-list" id="q-list"></div>
+        <div id="empty-state" style="text-align:center;padding:40px;color:var(--text-muted);display:none;">
+          <div style="font-size:48px;margin-bottom:12px;">📭</div>
+          <div>No questions yet. Add your first question!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: LIVE CONTROL -->
+    <div>
+      <div class="card live-control-card" style="margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:16px;"><span class="icon">🎮</span> Live Controls</div>
+
+        <!-- Current Question Display -->
+        <div class="current-q-display">
+          <div class="current-q-label">Now Showing</div>
+          <div class="current-q-title" id="live-q-title">No question selected</div>
+          <div class="current-q-num" id="live-q-num">Select a question to broadcast</div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-controls">
+          <button class="btn btn-ghost btn-full" id="btn-prev" onclick="navigateQuestion(-1)">◀ Prev</button>
+          <div class="q-counter"><span id="nav-cur">0</span> / <span id="nav-tot">0</span></div>
+          <button class="btn btn-primary btn-full" id="btn-next" onclick="navigateQuestion(1)">Next ▶</button>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-section">
+          <div class="timer-display" id="timer-display">02:00</div>
+          <div class="timer-progress">
+            <div class="timer-bar" id="timer-bar" style="width:100%"></div>
+          </div>
+          <div class="timer-input-row">
+            <label>Set (sec):</label>
+            <input type="number" class="timer-input" id="timer-set-input" value="120" min="10" max="7200" />
+            <button class="btn btn-ghost" style="padding:8px 12px;" onclick="applyTimerSetting()">✓</button>
+          </div>
+          <div class="timer-controls">
+            <button class="btn btn-success" id="btn-timer-toggle" onclick="toggleTimer()">▶ Start</button>
+            <button class="btn btn-warning" onclick="resetTimer()">↺ Reset</button>
+          </div>
+        </div>
+
+        <!-- Broadcast Message -->
+        <div class="broadcast-section">
+          <div class="card-title" style="margin-bottom:12px;font-size:14px;"><span class="icon">📢</span> Broadcast Message</div>
+          <div class="broadcast-row">
+            <input class="broadcast-input" id="broadcast-input" type="text" placeholder="Send message to all participants…" />
+            <button class="btn btn-violet" onclick="broadcastMsg()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Jump -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;"><span class="icon">⚡</span> Quick Jump</div>
+        <div id="quick-jump-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── EDITOR MODAL ─── -->
+<div class="modal-overlay" id="editor-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ <span id="modal-title-text">Add Question</span></div>
+
+    <div class="form-group">
+      <label class="form-label">Question Title</label>
+      <input class="form-input" id="f-title" type="text" placeholder="e.g., Find the Logic Bug" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Language</label>
+        <select class="form-select" id="f-lang">
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+          <option value="javascript">JavaScript</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time Limit (sec)</label>
+        <input class="form-input" id="f-time" type="number" value="120" min="10" max="7200" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Code Snippet (with the bug)</label>
+      <textarea class="form-textarea" id="f-code" placeholder="// Paste your buggy code here…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Answer / Hint (visible only to admin)</label>
+      <input class="form-input" id="f-hint" type="text" placeholder="e.g., Line 5: should be + instead of -" />
+    </div>
+
+    <div id="modal-hint-display" style="display:none;margin-top:8px;padding:12px 16px;background:rgba(6,255,165,0.07);border:1px solid rgba(6,255,165,0.2);border-radius:10px;font-size:13px;color:var(--accent-green);">
+      💡 <strong>Admin Hint:</strong> <span id="modal-hint-text"></span>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuestion()">💾 Save Question</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST ─── -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════
+const ADMIN_PASSWORD = 'admin123';
+const CHANNEL_NAME   = 'debug_relay';
+const STORAGE_KEY    = 'debug_relay_state';
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let state = {
+  questions: [],
+  currentIndex: -1,
+  timerSeconds: 120,
+  timerRunning: false,
+  timerTotal: 120,
+  broadcastMessage: ''
+};
+
+let timerInterval  = null;
+let editingIndex   = null;
+let channel        = null;
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('participant-link-url').textContent =
+    window.location.href.replace('admin.html', 'participant.html');
+
+  // BroadcastChannel
+  try { channel = new BroadcastChannel(CHANNEL_NAME); } catch(e) {}
+
+  // Load saved state
+  loadState();
+
+  // Pin input enter key
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryLogin();
+  });
+
+  // Demo questions if none
+  if (state.questions.length === 0) addSampleQuestions();
+});
+
+// ═══════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════
+function tryLogin() {
+  const val = document.getElementById('pin-input').value;
+  if (val === ADMIN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+    toast('Logged in as Admin 🛡️', 'success');
+  } else {
+    const err = document.getElementById('login-error');
+    err.textContent = '✗ Incorrect password. Try again.';
+    document.getElementById('pin-input').value = '';
+    setTimeout(() => err.textContent = '', 3000);
+  }
+}
+function logout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pin-input').value = '';
+  clearTimerInterval();
+}
+
+// ═══════════════════════════════════════════════
+//  STATE PERSISTENCE + BROADCAST
+// ═══════════════════════════════════════════════
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (channel) channel.postMessage({ type: 'STATE_UPDATE', state });
+}
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try { state = { ...state, ...JSON.parse(saved) }; } catch(e) {}
+  }
+}
+function broadcast(type, extra = {}) {
+  const msg = { type, state, ...extra };
+  if (channel) channel.postMessage(msg);
+  // Also poke storage for cross-tab compat
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY + '_event', JSON.stringify({ type, t: Date.now() }));
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function renderAll() {
+  renderQuestionList();
+  renderLiveControl();
+  renderQuickJump();
+  renderStats();
+}
+
+function renderQuestionList() {
+  const list = document.getElementById('q-list');
+  const empty = document.getElementById('empty-state');
+  list.innerHTML = '';
+
+  if (state.questions.length === 0) {
+    empty.style.display = 'block';
+    list.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  list.style.display = 'flex';
+
+  state.questions.forEach((q, i) => {
+    const el = document.createElement('div');
+    el.className = 'q-item' + (i === state.currentIndex ? ' active' : '');
+    el.innerHTML = `
+      <div class="q-num">${i + 1}</div>
+      <div class="q-info">
+        <div class="q-name">${escHtml(q.title)}</div>
+        <div class="q-lang">${q.language} • ${q.timeLimit}s</div>
+      </div>
+      <div class="q-actions">
+        <button class="q-action-btn edit" title="Edit" onclick="openEditor(${i}); event.stopPropagation();">✏</button>
+        <button class="q-action-btn delete" title="Delete" onclick="deleteQuestion(${i}); event.stopPropagation();">✕</button>
+      </div>
+    `;
+    el.addEventListener('click', () => setCurrentQuestion(i));
+    list.appendChild(el);
+  });
+}
+
+function renderLiveControl() {
+  const q = state.questions[state.currentIndex];
+  document.getElementById('live-q-title').textContent = q ? q.title : 'No question selected';
+  document.getElementById('live-q-num').textContent   = q
+    ? `Q${state.currentIndex + 1} of ${state.questions.length} — ${q.language.toUpperCase()} — ${q.timeLimit}s`
+    : 'Select a question to broadcast';
+  document.getElementById('nav-cur').textContent = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
+  document.getElementById('nav-tot').textContent = state.questions.length;
+  updateTimerDisplay();
+}
+
+function renderQuickJump() {
+  const grid = document.getElementById('quick-jump-grid');
+  grid.innerHTML = '';
+  state.questions.forEach((q, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (i === state.currentIndex ? 'btn-primary' : 'btn-ghost');
+    btn.textContent = i + 1;
+    btn.style.padding = '8px';
+    btn.title = q.title;
+    btn.addEventListener('click', () => setCurrentQuestion(i));
+    grid.appendChild(btn);
+  });
+}
+
+function renderStats() {
+  document.getElementById('stat-total').textContent   = state.questions.length;
+  document.getElementById('stat-current').textContent = state.currentIndex >= 0 ? `Q${state.currentIndex + 1}` : '—';
+  document.getElementById('stat-timer').textContent   = formatTime(state.timerSeconds);
+}
+
+// ═══════════════════════════════════════════════
+//  QUESTION CRUD
+// ═══════════════════════════════════════════════
+function openEditor(idx) {
+  editingIndex = idx;
+  const modal = document.getElementById('editor-modal');
+  document.getElementById('modal-title-text').textContent = idx === null ? 'Add Question' : 'Edit Question';
+
+  if (idx !== null) {
+    const q = state.questions[idx];
+    document.getElementById('f-title').value = q.title;
+    document.getElementById('f-lang').value  = q.language;
+    document.getElementById('f-time').value  = q.timeLimit;
+    document.getElementById('f-code').value  = q.code;
+    document.getElementById('f-hint').value  = q.hint || '';
+    const hintDisplay = document.getElementById('modal-hint-display');
+    if (q.hint) {
+      hintDisplay.style.display = 'block';
+      document.getElementById('modal-hint-text').textContent = q.hint;
+    } else {
+      hintDisplay.style.display = 'none';
+    }
+  } else {
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-lang').value  = 'c';
+    document.getElementById('f-time').value  = '120';
+    document.getElementById('f-code').value  = '';
+    document.getElementById('f-hint').value  = '';
+    document.getElementById('modal-hint-display').style.display = 'none';
+  }
+  modal.classList.add('open');
+}
+function closeEditor() {
+  document.getElementById('editor-modal').classList.remove('open');
+}
+function saveQuestion() {
+  const title = document.getElementById('f-title').value.trim();
+  const lang   = document.getElementById('f-lang').value;
+  const time   = parseInt(document.getElementById('f-time').value) || 120;
+  const code   = document.getElementById('f-code').value.trim();
+  const hint   = document.getElementById('f-hint').value.trim();
+
+  if (!title) { toast('Please enter a question title', 'error'); return; }
+  if (!code)  { toast('Please paste the code snippet', 'error'); return; }
+
+  const q = { id: Date.now(), title, language: lang, timeLimit: time, code, hint };
+
+  if (editingIndex === null) {
+    state.questions.push(q);
+    toast('Question added ✓', 'success');
+  } else {
+    state.questions[editingIndex] = q;
+    toast('Question updated ✓', 'success');
+  }
+  closeEditor();
+  saveState();
+  broadcast('QUESTIONS_UPDATED');
+  renderAll();
+}
+function deleteQuestion(idx) {
+  if (!confirm(`Delete "${state.questions[idx].title}"?`)) return;
+  state.questions.splice(idx, 1);
+  if (state.currentIndex >= state.questions.length) {
+    state.currentIndex = state.questions.length - 1;
+  }
+  saveState();
+  broadcast('QUESTIONS_UPDATED');
+  renderAll();
+  toast('Question deleted', 'info');
+}
+
+// ═══════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════
+function setCurrentQuestion(idx) {
+  if (idx < 0 || idx >= state.questions.length) return;
+  state.currentIndex = idx;
+  // Auto-set timer from question
+  state.timerSeconds = state.questions[idx].timeLimit;
+  state.timerTotal   = state.questions[idx].timeLimit;
+  state.timerRunning = false;
+  document.getElementById('timer-set-input').value = state.timerSeconds;
+  clearTimerInterval();
+  document.getElementById('btn-timer-toggle').textContent = '▶ Start';
+  saveState();
+  broadcast('QUESTION_CHANGE');
+  renderAll();
+  toast(`Switched to Q${idx + 1}: ${state.questions[idx].title}`, 'info');
+}
+function navigateQuestion(dir) {
+  const next = state.currentIndex + dir;
+  if (next >= 0 && next < state.questions.length) setCurrentQuestion(next);
+}
+
+// ═══════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════
+function applyTimerSetting() {
+  const val = parseInt(document.getElementById('timer-set-input').value) || 120;
+  state.timerSeconds = val;
+  state.timerTotal   = val;
+  clearTimerInterval();
+  state.timerRunning = false;
+  document.getElementById('btn-timer-toggle').textContent = '▶ Start';
+  saveState();
+  broadcast('TIMER_SET');
+  updateTimerDisplay();
+  renderStats();
+}
+function toggleTimer() {
+  if (state.timerRunning) {
+    state.timerRunning = false;
+    clearTimerInterval();
+    document.getElementById('btn-timer-toggle').textContent = '▶ Start';
+    broadcast('TIMER_PAUSE');
+  } else {
+    state.timerRunning = true;
+    document.getElementById('btn-timer-toggle').textContent = '⏸ Pause';
+    timerInterval = setInterval(tickTimer, 1000);
+    broadcast('TIMER_START');
+  }
+  saveState();
+}
+function resetTimer() {
+  clearTimerInterval();
+  state.timerRunning = false;
+  state.timerSeconds = state.timerTotal;
+  document.getElementById('btn-timer-toggle').textContent = '▶ Start';
+  saveState();
+  broadcast('TIMER_RESET');
+  updateTimerDisplay();
+  renderStats();
+}
+function clearTimerInterval() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+function tickTimer() {
+  if (state.timerSeconds <= 0) {
+    clearTimerInterval();
+    state.timerRunning = false;
+    document.getElementById('btn-timer-toggle').textContent = '▶ Start';
+    broadcast('TIMER_END');
+    toast('⏰ Time is up!', 'error');
+    return;
+  }
+  state.timerSeconds--;
+  saveState();
+  broadcast('TIMER_TICK');
+  updateTimerDisplay();
+  renderStats();
+}
+function updateTimerDisplay() {
+  const el  = document.getElementById('timer-display');
+  const bar = document.getElementById('timer-bar');
+  const pct = state.timerTotal > 0 ? (state.timerSeconds / state.timerTotal) * 100 : 100;
+  const isDanger = state.timerSeconds <= 30 && state.timerTotal > 0;
+
+  el.textContent = formatTime(state.timerSeconds);
+  el.classList.toggle('danger', isDanger);
+  bar.style.width = pct + '%';
+  bar.classList.toggle('danger', isDanger);
+}
+
+// ═══════════════════════════════════════════════
+//  BROADCAST MESSAGE
+// ═══════════════════════════════════════════════
+function broadcastMsg() {
+  const msg = document.getElementById('broadcast-input').value.trim();
+  if (!msg) return;
+  state.broadcastMessage = msg;
+  saveState();
+  if (channel) channel.postMessage({ type: 'BROADCAST_MSG', message: msg, state });
+  localStorage.setItem(STORAGE_KEY + '_event', JSON.stringify({ type: 'BROADCAST_MSG', message: msg, t: Date.now() }));
+  document.getElementById('broadcast-input').value = '';
+  toast(`📢 Broadcast sent: "${msg}"`, 'info');
+}
+
+// ═══════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ═══════════════════════════════════════════════
+function exportQuestions() {
+  const blob = new Blob([JSON.stringify(state.questions, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'debug_relay_questions.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Questions exported ✓', 'success');
+}
+function importQuestions(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const qs = JSON.parse(e.target.result);
+      if (!Array.isArray(qs)) throw new Error();
+      state.questions = qs;
+      state.currentIndex = -1;
+      saveState();
+      broadcast('QUESTIONS_UPDATED');
+      renderAll();
+      toast(`Imported ${qs.length} questions ✓`, 'success');
+    } catch { toast('Invalid JSON file', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════════════════
+//  PARTICIPANT LINK
+// ═══════════════════════════════════════════════
+function copyParticipantLink() {
+  const url = window.location.href.replace('admin.html', 'participant.html');
+  navigator.clipboard.writeText(url).then(() => toast('Link copied! 📋', 'success'));
+}
+
+// ═══════════════════════════════════════════════
+//  SAMPLE QUESTIONS
+// ═══════════════════════════════════════════════
+function addSampleQuestions() {
+  state.questions = [
+    {
+      id: 1, title: "Wrong Arithmetic Operator",
+      language: "c", timeLimit: 90, hint: "Line 4: '-' should be '+'",
+      code: `#include <stdio.h>\n\nint add(int a, int b) {\n    return a - b;  // Bug here\n}\n\nint main() {\n    printf("%d\\n", add(3, 4));\n    return 0;\n}`
+    },
+    {
+      id: 2, title: "Off-by-One in Loop",
+      language: "cpp", timeLimit: 120, hint: "Loop condition: i <= n should be i < n",
+      code: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int arr[] = {1, 2, 3, 4, 5};\n    int n = 5, sum = 0;\n    for (int i = 0; i <= n; i++) {  // Bug here\n        sum += arr[i];\n    }\n    cout << sum << endl;\n    return 0;\n}`
+    },
+    {
+      id: 3, title: "Wrong Return in Recursion",
+      language: "python", timeLimit: 100, hint: "Line 3: 'n * factorial(n)' should be 'n * factorial(n-1)'",
+      code: `def factorial(n):\n    if n == 0:\n        return 1\n    return n * factorial(n)  # Bug here\n\nprint(factorial(5))`
+    },
+    {
+      id: 4, title: "String Comparison Bug",
+      language: "java", timeLimit: 110, hint: "Use .equals() instead of == to compare strings",
+      code: `public class Main {\n    public static void main(String[] args) {\n        String a = new String("hello");\n        String b = new String("hello");\n        if (a == b) {  // Bug here\n            System.out.println("Equal");\n        } else {\n            System.out.println("Not Equal");\n        }\n    }\n}`
+    },
+    {
+      id: 5, title: "Missing Base Case",
+      language: "javascript", timeLimit: 130, hint: "Add base case: if (n <= 1) return n;",
+      code: `function fibonacci(n) {\n    // Bug: missing base case\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log(fibonacci(6));`
+    }
+  ];
+  saveState();
+}
+
+// ═══════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════
+function formatTime(s) {
+  if (s < 0) s = 0;
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return `${m}:${sec}`;
+}
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(40px)'; t.style.transition = '0.3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+</script>
+</body>
+</html>
