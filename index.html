@@ -589,32 +589,105 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 
-<script>
+<script type="module">
+import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
+import { getDatabase, ref, onValue }
+  from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js';
+
+// ═══════════════════════════════════════════════
+//  ⚠️  PASTE YOUR FIREBASE CONFIG HERE (same as admin.html)
+// ═══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "PASTE_API_KEY",
+  authDomain:        "PASTE_AUTH_DOMAIN",
+  databaseURL:       "PASTE_DATABASE_URL",
+  projectId:         "PASTE_PROJECT_ID",
+  storageBucket:     "PASTE_STORAGE_BUCKET",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId:             "PASTE_APP_ID"
+};
+// ═══════════════════════════════════════════════
 // ═══════════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════════
 const CHANNEL_NAME = 'debug_relay';
 const STORAGE_KEY  = 'debug_relay_state';
+const FB_PATH      = 'debug_relay/session';
+
+// ─── Init Firebase ───
+let db    = null;
+let fbRef = null;
+try {
+  const app = initializeApp(firebaseConfig);
+  db    = getDatabase(app);
+  fbRef = ref(db, FB_PATH);
+} catch(e) {
+  console.warn('Firebase not configured — using localStorage polling only.');
+}
 
 // ═══════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════
-let localState        = null;
-let channel           = null;
-let fsCountdownTimer  = null;
-let fsCountdownVal    = 3;
-let isFullscreen      = false;
+let localState          = null;
+let lastStateJSON       = null;
+let lastEventJSON       = null;
+let lastDisplayedIndex  = -99;
+let channel             = null;
+let fsCountdownTimer    = null;
+let fsCountdownVal      = 3;
+let isFullscreen        = false;
 
 // ═══════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
+  // BroadcastChannel — same-browser instant fallback
   try {
     channel = new BroadcastChannel(CHANNEL_NAME);
     channel.addEventListener('message', onChannelMessage);
   } catch(e) {}
 
+  // Storage event — same-browser cross-tab fallback
   window.addEventListener('storage', onStorageEvent);
+
+  // ─── FIREBASE REALTIME LISTENER (cross-device) ───
+  if (fbRef) {
+    onValue(fbRef, snap => {
+      if (snap.exists()) {
+        localState = snap.val();
+        applyState();
+      }
+    });
+    // Also listen for special events (broadcast msg, timer end)
+    const evRef = ref(db, FB_PATH + '_event');
+    onValue(evRef, snap => {
+      if (!snap.exists()) return;
+      const ev = snap.val();
+      const evStr = JSON.stringify(ev);
+      if (evStr === lastEventJSON) return;
+      lastEventJSON = evStr;
+      if (ev.type === 'BROADCAST_MSG') showBroadcastBanner(ev.message);
+      if (ev.type === 'TIMER_END')     showTimeUpOverlay();
+    });
+  }
+
+  // ─── POLLING FALLBACK (guaranteed on file://) ───
+  setInterval(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw && raw !== lastStateJSON) {
+      lastStateJSON = raw;
+      try { localState = JSON.parse(raw); applyState(); } catch(e) {}
+    }
+    const evRaw = localStorage.getItem(STORAGE_KEY + '_event');
+    if (evRaw && evRaw !== lastEventJSON) {
+      lastEventJSON = evRaw;
+      try {
+        const ev = JSON.parse(evRaw);
+        if (ev.type === 'BROADCAST_MSG') showBroadcastBanner(ev.message);
+        if (ev.type === 'TIMER_END')     showTimeUpOverlay();
+      } catch(e) {}
+    }
+  }, 500);
 
   loadAndApplyState();
 
@@ -745,21 +818,28 @@ function showQuestion(q, idx, total) {
   document.getElementById('waiting-screen').classList.add('hidden');
   document.getElementById('question-screen').classList.add('visible');
 
-  document.getElementById('hdr-lang').textContent   = q.language.toUpperCase();
-  document.getElementById('hdr-qnum').textContent   = `Trial ${idx + 1} / ${total}`;
-  document.getElementById('q-num-label').textContent = `Trial ${ORDINALS[idx] || (idx+1)}`;
-  document.getElementById('q-title-text').textContent = q.title;
-  document.getElementById('code-lang-label').textContent = q.language;
+  // Always update header + timer labels
+  document.getElementById('hdr-lang').textContent    = q.language.toUpperCase();
+  document.getElementById('hdr-qnum').textContent    = `Trial ${idx + 1} / ${total}`;
 
-  const codeEl  = document.getElementById('code-block');
-  codeEl.className = `language-${q.language}`;
-  codeEl.textContent = q.code;
-  Prism.highlightElement(codeEl);
+  // Only re-render code block when question actually changes
+  if (idx !== lastDisplayedIndex) {
+    lastDisplayedIndex = idx;
 
-  // Re-trigger card animation
-  const card = document.getElementById('q-card');
-  card.style.animation = 'none';
-  requestAnimationFrame(() => { card.style.animation = ''; });
+    document.getElementById('q-num-label').textContent  = `Trial ${ORDINALS[idx] || (idx+1)}`;
+    document.getElementById('q-title-text').textContent = q.title;
+    document.getElementById('code-lang-label').textContent = q.language;
+
+    const codeEl = document.getElementById('code-block');
+    codeEl.className   = `language-${q.language}`;
+    codeEl.textContent = q.code;
+    Prism.highlightElement(codeEl);
+
+    // Re-trigger fire-border + card slide-in animation
+    const card = document.getElementById('q-card');
+    card.style.animation = 'none';
+    requestAnimationFrame(() => { card.style.animation = ''; });
+  }
 }
 function updateTimer(seconds, total) {
   if (seconds === undefined || seconds === null) return;
