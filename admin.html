@@ -3,182 +3,277 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Debug Relay — Admin Panel</title>
+  <title>Debug Relay — Maester's Chamber</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary:   #05050f;
-      --bg-secondary: #0d0d1e;
-      --bg-card:      #111128;
-      --bg-input:     #0a0a1c;
-      --accent-cyan:  #00e5ff;
-      --accent-violet:#9d4edd;
-      --accent-pink:  #f72585;
-      --accent-green: #06ffa5;
-      --accent-amber: #ffd60a;
-      --text-primary: #e8eaf6;
-      --text-muted:   #7c7f9e;
-      --border:       rgba(255,255,255,0.07);
-      --glow-cyan:    0 0 24px rgba(0,229,255,0.25);
-      --glow-violet:  0 0 24px rgba(157,78,221,0.25);
-      --radius:       16px;
-      --transition:   0.25s cubic-bezier(0.4,0,0.2,1);
+      --bg-primary:     #060301;
+      --bg-secondary:   #0e0702;
+      --bg-card:        #130b03;
+      --bg-input:       #0a0501;
+      --gold:           #c9a227;
+      --gold-light:     #f0c040;
+      --gold-dim:       #7a6015;
+      --crimson:        #c41e3a;
+      --blood:          #7a0f1e;
+      --ember:          #e8621a;
+      --fire:           #ff7b2b;
+      --ash:            #8b7355;
+      --parchment:      #e8d5a3;
+      --parchment-dim:  #a89070;
+      --border:         rgba(201,162,39,0.15);
+      --border-strong:  rgba(201,162,39,0.3);
+      --glow-gold:      0 0 32px rgba(201,162,39,0.35);
+      --glow-crimson:   0 0 32px rgba(196,30,58,0.35);
+      --glow-ember:     0 0 24px rgba(232,98,26,0.3);
+      --radius:         4px;
+      --radius-lg:      8px;
+      --transition:     0.25s cubic-bezier(0.4,0,0.2,1);
     }
 
     html, body {
       height: 100%;
       background: var(--bg-primary);
-      color: var(--text-primary);
-      font-family: 'Outfit', sans-serif;
+      color: var(--parchment);
+      font-family: 'IM Fell English', Georgia, serif;
       overflow-x: hidden;
     }
 
-    /* ─── BACKGROUND ORBS ─── */
-    body::before, body::after {
+    /* ─── STONE TEXTURE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(201,162,39,0.025) 48px, rgba(201,162,39,0.025) 49px),
+        repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(201,162,39,0.015) 48px, rgba(201,162,39,0.015) 49px);
+      pointer-events: none; z-index: 0;
+    }
+    /* Fire glow orbs */
+    body::after {
       content: '';
       position: fixed;
+      width: 700px; height: 700px;
+      background: radial-gradient(ellipse at center, rgba(196,30,58,0.08) 0%, transparent 65%);
+      bottom: -300px; right: -200px;
+      pointer-events: none; z-index: 0;
       border-radius: 50%;
-      filter: blur(120px);
-      pointer-events: none;
-      z-index: 0;
     }
-    body::before {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(157,78,221,0.15) 0%, transparent 70%);
-      top: -200px; left: -200px;
-    }
-    body::after {
+    .flame-orb-left {
+      position: fixed;
       width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(0,229,255,0.10) 0%, transparent 70%);
-      bottom: -150px; right: -150px;
+      background: radial-gradient(ellipse at center, rgba(232,98,26,0.07) 0%, transparent 65%);
+      top: -150px; left: -100px;
+      pointer-events: none; z-index: 0;
+      border-radius: 50%;
+      filter: blur(60px);
     }
+
+    /* ─── DECORATIVE BORDER CORNERS ─── */
+    .corner-deco {
+      position: fixed;
+      width: 80px; height: 80px;
+      pointer-events: none; z-index: 0; opacity: 0.25;
+    }
+    .corner-deco.tl { top: 0; left: 0; border-top: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+    .corner-deco.tr { top: 0; right: 0; border-top: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+    .corner-deco.bl { bottom: 0; left: 0; border-bottom: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+    .corner-deco.br { bottom: 0; right: 0; border-bottom: 2px solid var(--gold); border-right: 2px solid var(--gold); }
 
     /* ─── LOGIN SCREEN ─── */
     #login-screen {
       position: fixed; inset: 0;
       display: flex; align-items: center; justify-content: center;
       z-index: 1000;
-      background: radial-gradient(ellipse at center, #0d0d2b 0%, #05050f 100%);
+      background: radial-gradient(ellipse at center, #1a0a02 0%, #060301 100%);
     }
     .login-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(157,78,221,0.35);
-      border-radius: 24px;
-      padding: 48px 56px;
-      width: 420px;
+      background: linear-gradient(180deg, #1a0c03 0%, #0e0700 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 52px 60px;
+      width: 440px;
       text-align: center;
-      box-shadow: var(--glow-violet), 0 32px 64px rgba(0,0,0,0.6);
-      animation: loginAppear 0.6s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: var(--glow-gold), var(--glow-crimson), 0 40px 80px rgba(0,0,0,0.8);
+      animation: loginAppear 0.7s cubic-bezier(0.34,1.2,0.64,1);
+      position: relative;
     }
+    /* Corner ornaments on login card */
+    .login-card::before, .login-card::after {
+      content: '✦';
+      position: absolute;
+      font-size: 14px;
+      color: var(--gold-dim);
+    }
+    .login-card::before { top: 12px; left: 16px; }
+    .login-card::after  { bottom: 12px; right: 16px; }
+
     @keyframes loginAppear {
-      from { opacity: 0; transform: scale(0.85) translateY(20px); }
+      from { opacity: 0; transform: scale(0.88) translateY(24px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
     .login-logo {
-      width: 72px; height: 72px;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border-radius: 20px;
-      margin: 0 auto 24px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
-      box-shadow: var(--glow-violet);
+      font-size: 56px; margin-bottom: 16px;
+      filter: drop-shadow(0 0 20px rgba(196,30,58,0.6));
+      animation: dragonBreath 4s ease-in-out infinite;
     }
-    .login-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
-    .login-sub   { color: var(--text-muted); font-size: 14px; margin-bottom: 36px; }
+    @keyframes dragonBreath {
+      0%,100% { filter: drop-shadow(0 0 20px rgba(196,30,58,0.5)); }
+      50%      { filter: drop-shadow(0 0 40px rgba(232,98,26,0.9)); }
+    }
+    .login-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 11px; font-weight: 400;
+      letter-spacing: 4px; color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .login-main-title {
+      font-family: 'Cinzel', serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--parchment);
+      margin-bottom: 6px;
+      text-shadow: 0 2px 12px rgba(201,162,39,0.3);
+    }
+    .login-sub {
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      color: var(--ash);
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+    /* Gold divider */
+    .login-divider {
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 28px;
+    }
     .login-input {
       width: 100%; padding: 14px 18px;
-      background: var(--bg-input);
-      border: 1px solid rgba(157,78,221,0.3);
-      border-radius: 12px;
-      color: var(--text-primary);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      color: var(--gold-light);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      letter-spacing: 8px;
+      font-size: 20px;
+      letter-spacing: 10px;
       text-align: center;
       outline: none;
       transition: var(--transition);
       margin-bottom: 20px;
     }
     .login-input:focus {
-      border-color: var(--accent-violet);
-      box-shadow: var(--glow-violet);
+      border-color: var(--gold);
+      box-shadow: var(--glow-gold);
     }
     .login-btn {
-      width: 100%; padding: 14px;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border: none; border-radius: 12px;
-      color: #000; font-family: 'Outfit', sans-serif;
-      font-size: 16px; font-weight: 700;
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #8b1515 0%, #c41e3a 50%, #8b1515 100%);
+      border: 1px solid rgba(196,30,58,0.5);
+      border-radius: var(--radius);
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
       cursor: pointer;
       transition: var(--transition);
+      position: relative;
+      overflow: hidden;
     }
-    .login-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .login-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 30%, rgba(201,162,39,0.15) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
+    .login-btn:hover::before { transform: translateX(100%); }
+    .login-btn:hover { box-shadow: var(--glow-crimson); transform: translateY(-1px); }
     .login-error {
-      color: var(--accent-pink); font-size: 13px;
-      margin-top: 12px; min-height: 18px;
+      color: var(--fire); font-size: 13px; margin-top: 14px;
+      font-family: 'IM Fell English', serif; font-style: italic;
+      min-height: 18px;
     }
 
     /* ─── APP LAYOUT ─── */
     #app { display: none; position: relative; z-index: 1; min-height: 100vh; }
 
+    /* ─── TOP BAR ─── */
     .top-bar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 32px;
-      background: rgba(13,13,30,0.85);
+      padding: 14px 32px;
+      background: rgba(13,7,1,0.92);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
     }
+    /* Top bar gold line */
+    .top-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--gold) 20%, var(--gold) 80%, transparent 100%);
+      opacity: 0.4;
+    }
     .top-bar-brand {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; align-items: center; gap: 14px;
     }
-    .brand-icon {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+    .brand-icon { font-size: 26px; filter: drop-shadow(0 0 8px rgba(232,98,26,0.6)); }
+    .brand-name {
+      font-family: 'Cinzel', serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--parchment);
+      letter-spacing: 1px;
     }
-    .brand-name { font-size: 18px; font-weight: 700; }
-    .brand-name span { color: var(--accent-cyan); }
-
+    .brand-name span { color: var(--gold); }
+    .brand-sub {
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 11px;
+      color: var(--ash);
+      margin-left: 8px;
+    }
     .top-bar-status {
       display: flex; align-items: center; gap: 8px;
-      background: rgba(6,255,165,0.1);
-      border: 1px solid rgba(6,255,165,0.25);
+      background: rgba(196,30,58,0.08);
+      border: 1px solid rgba(196,30,58,0.25);
       border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 13px; color: var(--accent-green);
-      font-weight: 500;
+      padding: 6px 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px; color: var(--ember);
+      letter-spacing: 2px; text-transform: uppercase;
     }
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent-green);
-      animation: pulse 2s infinite;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ember);
+      animation: firePulse 2s ease-in-out infinite;
     }
-    @keyframes pulse {
-      0%,100% { opacity: 1; }
-      50%      { opacity: 0.4; }
+    @keyframes firePulse {
+      0%,100% { opacity: 1; box-shadow: 0 0 6px var(--ember); }
+      50%      { opacity: 0.5; box-shadow: 0 0 12px var(--fire); }
     }
-
     .logout-btn {
-      background: rgba(247,37,133,0.12);
-      border: 1px solid rgba(247,37,133,0.3);
-      border-radius: 10px;
-      color: var(--accent-pink);
-      padding: 8px 16px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px; font-weight: 600;
+      background: rgba(122,15,30,0.2);
+      border: 1px solid rgba(196,30,58,0.3);
+      border-radius: var(--radius);
+      color: var(--crimson);
+      padding: 8px 18px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 2px;
       cursor: pointer;
       transition: var(--transition);
+      text-transform: uppercase;
     }
-    .logout-btn:hover { background: rgba(247,37,133,0.2); }
+    .logout-btn:hover { background: rgba(122,15,30,0.4); box-shadow: var(--glow-crimson); }
 
+    /* ─── MAIN LAYOUT ─── */
     .main-content {
       display: grid;
       grid-template-columns: 1fr 380px;
@@ -190,32 +285,45 @@
 
     /* ─── CARDS ─── */
     .card {
-      background: var(--bg-card);
+      background: linear-gradient(180deg, #160c03 0%, #0e0700 100%);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-lg);
       padding: 24px;
+      position: relative;
+    }
+    /* Card top gold accent line */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 20px; right: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0.4;
     }
     .card-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 20px;
     }
     .card-title {
-      font-size: 16px; font-weight: 700;
+      font-family: 'Cinzel', serif;
+      font-size: 13px; font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px; text-transform: uppercase;
       display: flex; align-items: center; gap: 8px;
     }
-    .card-title .icon { font-size: 18px; }
+    .card-title .icon { font-size: 16px; }
 
-    /* ─── LIVE CONTROL ─── */
+    /* ─── LIVE CONTROL CARD ─── */
     .live-control-card {
-      background: linear-gradient(135deg, rgba(17,17,40,0.9), rgba(13,13,30,0.9));
-      border: 1px solid rgba(0,229,255,0.2);
-      box-shadow: var(--glow-cyan);
+      background: linear-gradient(180deg, #1c0a03 0%, #100600 100%);
+      border: 1px solid rgba(201,162,39,0.22);
+      box-shadow: var(--glow-gold);
     }
 
     .current-q-display {
-      background: var(--bg-input);
-      border: 1px solid rgba(0,229,255,0.15);
-      border-radius: 12px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
       padding: 20px;
       margin-bottom: 20px;
       position: relative;
@@ -226,60 +334,73 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 2px;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+      background: linear-gradient(90deg, var(--crimson), var(--gold), var(--ember));
     }
     .current-q-label {
-      font-size: 11px; font-weight: 600;
-      color: var(--accent-cyan);
-      text-transform: uppercase; letter-spacing: 2px;
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase; letter-spacing: 3px;
       margin-bottom: 8px;
     }
     .current-q-title {
-      font-size: 18px; font-weight: 700;
+      font-family: 'Cinzel', serif;
+      font-size: 17px; font-weight: 700;
+      color: var(--parchment);
       margin-bottom: 4px;
     }
     .current-q-num {
-      font-size: 13px; color: var(--text-muted);
+      font-size: 12px; color: var(--ash);
+      font-style: italic;
     }
 
-    /* Timer */
+    /* ─── TIMER ─── */
     .timer-section { margin-bottom: 20px; }
     .timer-display {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 52px; font-weight: 600;
+      font-family: 'Cinzel', serif;
+      font-size: 54px; font-weight: 900;
       text-align: center;
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      background: linear-gradient(135deg, var(--gold) 0%, var(--fire) 50%, var(--gold) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      background-size: 200% auto;
       line-height: 1;
       margin-bottom: 12px;
-      transition: color 0.3s;
+      animation: goldShimmer 4s linear infinite;
+    }
+    @keyframes goldShimmer {
+      0%   { background-position: 0% center; }
+      100% { background-position: 200% center; }
     }
     .timer-display.danger {
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-amber));
+      background: linear-gradient(135deg, var(--fire), var(--crimson), var(--fire));
       -webkit-background-clip: text;
       background-clip: text;
-      animation: timerPulse 1s infinite;
+      background-size: 200% auto;
+      animation: dangerFlicker 0.8s ease-in-out infinite;
     }
-    @keyframes timerPulse {
+    @keyframes dangerFlicker {
       0%,100% { opacity: 1; }
-      50%      { opacity: 0.6; }
+      50%      { opacity: 0.65; }
     }
     .timer-progress {
       height: 6px; border-radius: 3px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
       overflow: hidden; margin-bottom: 16px;
+      border: 1px solid rgba(201,162,39,0.1);
     }
     .timer-bar {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+      background: linear-gradient(90deg, var(--blood), var(--crimson), var(--ember), var(--gold));
       border-radius: 3px;
-      transition: width 1s linear, background 0.3s;
+      transition: width 1s linear;
     }
     .timer-bar.danger {
-      background: linear-gradient(90deg, var(--accent-amber), var(--accent-pink));
+      background: linear-gradient(90deg, var(--blood), var(--crimson));
+      animation: dangerBar 0.8s ease-in-out infinite;
     }
+    @keyframes dangerBar { 0%,100%{opacity:1}50%{opacity:0.6} }
     .timer-controls {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 8px; margin-bottom: 8px;
@@ -289,26 +410,30 @@
       margin-bottom: 12px;
     }
     .timer-input-row label {
-      font-size: 13px; color: var(--text-muted); flex-shrink: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 11px; color: var(--ash);
+      letter-spacing: 1px; flex-shrink: 0;
+      text-transform: uppercase;
     }
     .timer-input {
       flex: 1; padding: 8px 12px;
-      background: var(--bg-input);
+      background: rgba(0,0,0,0.5);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
+      border-radius: var(--radius);
+      color: var(--parchment);
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
       outline: none;
     }
-    .timer-input:focus { border-color: var(--accent-cyan); }
+    .timer-input:focus { border-color: var(--gold); }
 
-    /* Buttons */
+    /* ─── BUTTONS ─── */
     .btn {
       padding: 10px 16px;
-      border: none; border-radius: 10px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px; font-weight: 600;
+      border: none; border-radius: var(--radius);
+      font-family: 'Cinzel', serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
       cursor: pointer;
       transition: var(--transition);
       display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -316,35 +441,39 @@
     .btn:hover { transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
-      color: #000;
+      background: linear-gradient(135deg, #7a0f1e, #c41e3a, #7a0f1e);
+      border: 1px solid rgba(196,30,58,0.5);
+      color: var(--gold-light);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
+    .btn-primary:hover { box-shadow: var(--glow-crimson), inset 0 1px 0 rgba(255,255,255,0.1); }
     .btn-ghost {
-      background: rgba(255,255,255,0.06);
+      background: rgba(201,162,39,0.07);
       border: 1px solid var(--border);
-      color: var(--text-primary);
+      color: var(--parchment-dim);
     }
-    .btn-ghost:hover { background: rgba(255,255,255,0.10); }
+    .btn-ghost:hover { background: rgba(201,162,39,0.13); border-color: var(--border-strong); color: var(--parchment); }
     .btn-success {
-      background: rgba(6,255,165,0.15);
-      border: 1px solid rgba(6,255,165,0.3);
-      color: var(--accent-green);
+      background: rgba(20,80,30,0.25);
+      border: 1px solid rgba(40,140,60,0.35);
+      color: #5ecf7a;
     }
     .btn-danger {
-      background: rgba(247,37,133,0.15);
-      border: 1px solid rgba(247,37,133,0.3);
-      color: var(--accent-pink);
+      background: rgba(122,15,30,0.2);
+      border: 1px solid rgba(196,30,58,0.3);
+      color: var(--crimson);
     }
     .btn-warning {
-      background: rgba(255,214,10,0.15);
-      border: 1px solid rgba(255,214,10,0.3);
-      color: var(--accent-amber);
+      background: rgba(201,100,0,0.2);
+      border: 1px solid rgba(232,98,26,0.35);
+      color: var(--ember);
     }
     .btn-violet {
-      background: rgba(157,78,221,0.2);
-      border: 1px solid rgba(157,78,221,0.35);
-      color: var(--accent-violet);
+      background: rgba(201,162,39,0.12);
+      border: 1px solid var(--border-strong);
+      color: var(--gold);
     }
+    .btn-violet:hover { background: rgba(201,162,39,0.22); box-shadow: var(--glow-gold); }
     .btn-full { width: 100%; }
 
     /* Nav Controls */
@@ -354,9 +483,9 @@
     }
     .q-counter {
       display: flex; align-items: center; justify-content: center;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Cinzel', serif;
       font-size: 20px; font-weight: 700;
-      color: var(--accent-cyan);
+      color: var(--gold);
     }
 
     /* Broadcast */
@@ -364,33 +493,30 @@
     .broadcast-row { display: flex; gap: 8px; }
     .broadcast-input {
       flex: 1; padding: 10px 14px;
-      background: var(--bg-input);
+      background: rgba(0,0,0,0.5);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-family: 'Outfit', sans-serif;
+      border-radius: var(--radius);
+      color: var(--parchment);
+      font-family: 'IM Fell English', serif;
       font-size: 14px; outline: none;
     }
-    .broadcast-input:focus { border-color: var(--accent-violet); }
+    .broadcast-input:focus { border-color: var(--gold); }
+    .broadcast-input::placeholder { color: var(--ash); font-style: italic; }
 
     /* ─── QUESTION LIST ─── */
-    .questions-panel { display: flex; flex-direction: column; gap: 16px; }
-
-    .q-list { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+    .q-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
     .q-list::-webkit-scrollbar { width: 4px; }
-    .q-list::-webkit-scrollbar-track { background: transparent; }
-    .q-list::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.4); border-radius: 2px; }
+    .q-list::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
 
     .q-item {
       display: flex; align-items: center; gap: 12px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(201,162,39,0.1);
+      border-radius: var(--radius);
       padding: 14px 16px;
       cursor: pointer;
       transition: var(--transition);
-      position: relative;
-      overflow: hidden;
+      position: relative; overflow: hidden;
     }
     .q-item::before {
       content: '';
@@ -400,49 +526,51 @@
       background: transparent;
       transition: var(--transition);
     }
-    .q-item:hover { border-color: rgba(157,78,221,0.3); background: rgba(17,17,40,0.9); }
-    .q-item:hover::before { background: var(--accent-violet); }
-    .q-item.active { border-color: rgba(0,229,255,0.35); background: rgba(0,229,255,0.06); }
-    .q-item.active::before { background: var(--accent-cyan); }
+    .q-item:hover { border-color: rgba(201,162,39,0.25); background: rgba(201,162,39,0.05); }
+    .q-item:hover::before { background: var(--ember); }
+    .q-item.active { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.07); }
+    .q-item.active::before { background: var(--gold); }
 
     .q-num {
       width: 32px; height: 32px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 8px;
+      background: rgba(201,162,39,0.08);
+      border: 1px solid rgba(201,162,39,0.2);
+      border-radius: var(--radius);
       display: flex; align-items: center; justify-content: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; font-weight: 600;
-      flex-shrink: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 12px; font-weight: 700;
+      color: var(--ash); flex-shrink: 0;
     }
-    .q-item.active .q-num {
-      background: rgba(0,229,255,0.15);
-      color: var(--accent-cyan);
-    }
+    .q-item.active .q-num { background: rgba(201,162,39,0.18); color: var(--gold); border-color: var(--border-strong); }
     .q-info { flex: 1; min-width: 0; }
-    .q-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-name {
+      font-family: 'Cinzel', serif;
+      font-size: 13px; font-weight: 600;
+      color: var(--parchment);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     .q-lang {
-      font-size: 11px; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 1px;
-      margin-top: 2px;
+      font-size: 11px; color: var(--ash);
+      margin-top: 3px; font-style: italic;
     }
     .q-actions { display: flex; gap: 4px; opacity: 0; transition: var(--transition); }
     .q-item:hover .q-actions { opacity: 1; }
     .q-action-btn {
       width: 28px; height: 28px;
-      border: none; border-radius: 6px;
-      font-size: 13px; cursor: pointer;
+      border: none; border-radius: var(--radius);
+      font-size: 12px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: var(--transition);
     }
-    .q-action-btn.edit { background: rgba(157,78,221,0.15); color: var(--accent-violet); }
-    .q-action-btn.edit:hover { background: rgba(157,78,221,0.3); }
-    .q-action-btn.delete { background: rgba(247,37,133,0.15); color: var(--accent-pink); }
-    .q-action-btn.delete:hover { background: rgba(247,37,133,0.3); }
+    .q-action-btn.edit   { background: rgba(201,162,39,0.1);  color: var(--gold);    border: 1px solid rgba(201,162,39,0.2); }
+    .q-action-btn.edit:hover   { background: rgba(201,162,39,0.25); }
+    .q-action-btn.delete { background: rgba(122,15,30,0.2);    color: var(--crimson); border: 1px solid rgba(196,30,58,0.25); }
+    .q-action-btn.delete:hover { background: rgba(122,15,30,0.4); }
 
-    /* ─── EDITOR MODAL ─── */
+    /* ─── MODAL ─── */
     .modal-overlay {
       position: fixed; inset: 0;
-      background: rgba(5,5,15,0.85);
+      background: rgba(3,1,0,0.88);
       backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
       z-index: 500;
@@ -451,49 +579,66 @@
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal {
-      background: var(--bg-card);
-      border: 1px solid rgba(157,78,221,0.3);
-      border-radius: 20px;
-      padding: 32px;
-      width: 700px;
+      background: linear-gradient(180deg, #1e0e03 0%, #110800 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      width: 720px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: var(--glow-violet), 0 40px 80px rgba(0,0,0,0.7);
-      transform: scale(0.95) translateY(10px);
+      box-shadow: var(--glow-gold), 0 40px 80px rgba(0,0,0,0.8);
+      transform: scale(0.95) translateY(12px);
       transition: var(--transition);
+      position: relative;
+    }
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 40px; right: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
     }
     .modal-overlay.open .modal { transform: scale(1) translateY(0); }
-    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 24px;
-      display: flex; align-items: center; gap: 10px; }
+    .modal-title {
+      font-family: 'Cinzel', serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 28px;
+      letter-spacing: 2px;
+      display: flex; align-items: center; gap: 10px;
+    }
     .form-group { margin-bottom: 18px; }
     .form-label {
-      display: block; font-size: 13px; font-weight: 600;
-      color: var(--text-muted); text-transform: uppercase;
-      letter-spacing: 1px; margin-bottom: 8px;
+      display: block;
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 700;
+      color: var(--ash);
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 8px;
     }
     .form-input, .form-select, .form-textarea {
       width: 100%; padding: 12px 16px;
-      background: var(--bg-input);
+      background: rgba(0,0,0,0.5);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-family: 'Outfit', sans-serif;
+      border-radius: var(--radius);
+      color: var(--parchment);
+      font-family: 'IM Fell English', serif;
       font-size: 14px;
       outline: none;
       transition: var(--transition);
     }
     .form-input:focus, .form-select:focus, .form-textarea:focus {
-      border-color: var(--accent-violet);
-      box-shadow: 0 0 0 3px rgba(157,78,221,0.1);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(201,162,39,0.1);
     }
     .form-select { cursor: pointer; }
-    .form-select option { background: var(--bg-card); }
+    .form-select option { background: #1e0e03; color: var(--parchment); }
     .form-textarea {
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
       resize: vertical;
       min-height: 200px;
-      line-height: 1.6;
+      line-height: 1.7;
     }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
 
@@ -505,19 +650,20 @@
     }
     .toast {
       padding: 14px 20px;
-      border-radius: 12px;
-      font-size: 14px; font-weight: 500;
-      backdrop-filter: blur(12px);
-      animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      border-radius: var(--radius);
+      font-family: 'IM Fell English', serif;
+      font-size: 14px;
+      animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
       max-width: 320px;
+      border-left: 3px solid;
     }
     @keyframes toastIn {
-      from { opacity: 0; transform: translateX(40px) scale(0.9); }
+      from { opacity: 0; transform: translateX(40px) scale(0.92); }
       to   { opacity: 1; transform: translateX(0) scale(1); }
     }
-    .toast.success { background: rgba(6,255,165,0.15); border: 1px solid rgba(6,255,165,0.3); color: var(--accent-green); }
-    .toast.info    { background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.25); color: var(--accent-cyan); }
-    .toast.error   { background: rgba(247,37,133,0.15); border: 1px solid rgba(247,37,133,0.3); color: var(--accent-pink); }
+    .toast.success { background: rgba(20,50,20,0.9); border-color: #5ecf7a; color: #5ecf7a; }
+    .toast.info    { background: rgba(30,20,5,0.95); border-color: var(--gold); color: var(--gold); }
+    .toast.error   { background: rgba(60,5,10,0.95); border-color: var(--crimson); color: #ff6b80; }
 
     /* ─── STATS ROW ─── */
     .stats-row {
@@ -525,119 +671,163 @@
       gap: 12px; margin-bottom: 24px;
     }
     .stat-card {
-      background: var(--bg-card);
+      background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: var(--radius-lg);
+      padding: 18px;
       text-align: center;
+      position: relative;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 10px; right: 10px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      opacity: 0.5;
     }
     .stat-val {
-      font-size: 28px; font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Cinzel', serif;
+      font-size: 30px; font-weight: 900;
     }
-    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
-    .stat-val.cyan   { color: var(--accent-cyan); }
-    .stat-val.violet { color: var(--accent-violet); }
-    .stat-val.green  { color: var(--accent-green); }
-
-    /* ─── SCROLLBAR ─── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.3); border-radius: 3px; }
-
-    /* ─── RESPONSIVE ─── */
-    @media (max-width: 1100px) {
-      .main-content { grid-template-columns: 1fr; }
+    .stat-label {
+      font-family: 'Cinzel', serif;
+      font-size: 9px; color: var(--ash);
+      margin-top: 4px; text-transform: uppercase; letter-spacing: 2px;
     }
+    .stat-val.gold   { color: var(--gold); text-shadow: 0 0 20px rgba(201,162,39,0.4); }
+    .stat-val.ember  { color: var(--ember); text-shadow: 0 0 20px rgba(232,98,26,0.3); }
+    .stat-val.crimson{ color: var(--crimson); text-shadow: 0 0 20px rgba(196,30,58,0.3); }
 
-    /* participant link banner */
+    /* ─── PARTICIPANT LINK ─── */
     .link-banner {
-      background: rgba(0,229,255,0.07);
-      border: 1px solid rgba(0,229,255,0.18);
-      border-radius: 12px;
+      background: rgba(201,162,39,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 14px 18px;
       display: flex; align-items: center; gap: 12px;
-      font-size: 13px;
     }
     .link-url {
       flex: 1;
       font-family: 'JetBrains Mono', monospace;
-      color: var(--accent-cyan);
+      font-size: 12px;
+      color: var(--gold-dim);
       word-break: break-all;
     }
     .copy-btn {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      background: rgba(0,229,255,0.15);
-      border: 1px solid rgba(0,229,255,0.25);
-      border-radius: 8px;
-      color: var(--accent-cyan);
-      font-size: 12px; font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
+      flex-shrink: 0; padding: 7px 14px;
+      background: rgba(201,162,39,0.1);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer; transition: var(--transition);
+      text-transform: uppercase;
     }
-    .copy-btn:hover { background: rgba(0,229,255,0.25); }
+    .copy-btn:hover { background: rgba(201,162,39,0.2); }
+
+    /* ─── QUICK JUMP ─── */
+    #quick-jump-grid .btn {
+      font-size: 13px; letter-spacing: 0; padding: 8px;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+    /* ─── EMPTY STATE ─── */
+    #empty-state {
+      text-align: center; padding: 40px;
+      color: var(--ash);
+      font-style: italic;
+    }
+    #empty-state > div:first-child { font-size: 40px; margin-bottom: 12px; }
+
+    /* ─── HINT DISPLAY ─── */
+    #modal-hint-display {
+      display: none; margin-top: 8px; padding: 12px 16px;
+      background: rgba(40,100,40,0.1);
+      border: 1px solid rgba(40,140,60,0.25);
+      border-radius: var(--radius);
+      font-size: 13px; color: #5ecf7a;
+      font-style: italic;
+    }
+
+    @media (max-width: 1100px) {
+      .main-content { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
+<!-- Flame orb -->
+<div class="flame-orb-left"></div>
+<!-- Corner decorations -->
+<div class="corner-deco tl"></div>
+<div class="corner-deco tr"></div>
+<div class="corner-deco bl"></div>
+<div class="corner-deco br"></div>
+
 <!-- ─── LOGIN ─── -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">🛡️</div>
-    <div class="login-title">Admin Access</div>
-    <div class="login-sub">Debug Relay — Cebroid 2k26</div>
+    <div class="login-logo">🐉</div>
+    <div class="login-title">Cebroid 2k26 &nbsp;·&nbsp; Debug Relay</div>
+    <div class="login-main-title">Maester's Chamber</div>
+    <div class="login-sub">"A mind needs scrolls as a sword needs a whetstone."</div>
+    <div class="login-divider"></div>
     <input id="pin-input" class="login-input" type="password" maxlength="12"
            placeholder="••••••••" autocomplete="off" />
-    <button class="login-btn" onclick="tryLogin()">Unlock Panel</button>
+    <button class="login-btn" onclick="tryLogin()">⚔ &nbsp;Enter the Chamber</button>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 
 <!-- ─── MAIN APP ─── -->
 <div id="app">
-  <!-- Top Bar -->
   <div class="top-bar">
     <div class="top-bar-brand">
-      <div class="brand-icon">🐛</div>
-      <div class="brand-name">Debug <span>Relay</span> <small style="font-weight:400;font-size:12px;color:var(--text-muted);margin-left:6px;">Admin Panel</small></div>
+      <div class="brand-icon">🔥</div>
+      <div class="brand-name">Debug <span>Relay</span></div>
+      <div class="brand-sub">— Maester's Chamber</div>
     </div>
     <div class="top-bar-status">
       <div class="status-dot"></div>
-      Live Session Active
+      Session Active
     </div>
-    <button class="logout-btn" onclick="logout()">⏻ Logout</button>
+    <button class="logout-btn" onclick="logout()">⚔ Leave</button>
   </div>
 
   <div class="main-content">
     <!-- LEFT COLUMN -->
     <div>
-      <!-- Stats -->
       <div class="stats-row">
         <div class="stat-card">
-          <div class="stat-val cyan" id="stat-total">0</div>
-          <div class="stat-label">Questions</div>
+          <div class="stat-val gold" id="stat-total">0</div>
+          <div class="stat-label">Scrolls</div>
         </div>
         <div class="stat-card">
-          <div class="stat-val violet" id="stat-current">—</div>
-          <div class="stat-label">Current Q</div>
+          <div class="stat-val ember" id="stat-current">—</div>
+          <div class="stat-label">Active Trial</div>
         </div>
         <div class="stat-card">
-          <div class="stat-val green" id="stat-timer">—</div>
-          <div class="stat-label">Timer</div>
+          <div class="stat-val crimson" id="stat-timer">—</div>
+          <div class="stat-label">Time Left</div>
         </div>
       </div>
 
       <!-- Participant Link -->
       <div class="card" style="margin-bottom:24px;">
         <div class="card-header">
-          <div class="card-title"><span class="icon">🔗</span> Participant Page Link</div>
+          <div class="card-title"><span class="icon">⚔</span>Contestant Portal</div>
         </div>
         <div class="link-banner">
           <div class="link-url" id="participant-link-url"></div>
-          <button class="copy-btn" onclick="copyParticipantLink()">📋 Copy</button>
+          <button class="copy-btn" onclick="copyParticipantLink()">📜 Copy</button>
           <a id="open-participant-btn" href="participant.html" target="_blank">
-            <button class="copy-btn" style="background:rgba(157,78,221,0.15);border-color:rgba(157,78,221,0.3);color:var(--accent-violet);">🚀 Open</button>
+            <button class="copy-btn" style="background:rgba(196,30,58,0.12);border-color:rgba(196,30,58,0.3);color:var(--crimson);">🔥 Open</button>
           </a>
         </div>
       </div>
@@ -645,44 +835,41 @@
       <!-- Question Editor -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title"><span class="icon">📝</span> Question Bank</div>
+          <div class="card-title"><span class="icon">📜</span>Trial Scrolls</div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost" onclick="exportQuestions()" style="font-size:12px;">⬇ Export</button>
-            <label class="btn btn-ghost" style="font-size:12px;cursor:pointer;">
+            <button class="btn btn-ghost" onclick="exportQuestions()" style="font-size:10px;">⬇ Export</button>
+            <label class="btn btn-ghost" style="font-size:10px;cursor:pointer;">
               ⬆ Import
               <input type="file" accept=".json" style="display:none" onchange="importQuestions(event)">
             </label>
-            <button class="btn btn-primary" onclick="openEditor(null)">+ Add Question</button>
+            <button class="btn btn-primary" onclick="openEditor(null)">+ Inscribe Scroll</button>
           </div>
         </div>
         <div class="q-list" id="q-list"></div>
-        <div id="empty-state" style="text-align:center;padding:40px;color:var(--text-muted);display:none;">
-          <div style="font-size:48px;margin-bottom:12px;">📭</div>
-          <div>No questions yet. Add your first question!</div>
+        <div id="empty-state" style="display:none;">
+          <div>📜</div>
+          <div>No scrolls inscribed yet. Add your first trial!</div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT COLUMN: LIVE CONTROL -->
+    <!-- RIGHT COLUMN -->
     <div>
       <div class="card live-control-card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:16px;"><span class="icon">🎮</span> Live Controls</div>
+        <div class="card-title" style="margin-bottom:16px;"><span class="icon">🔥</span>Command the Trial</div>
 
-        <!-- Current Question Display -->
         <div class="current-q-display">
-          <div class="current-q-label">Now Showing</div>
-          <div class="current-q-title" id="live-q-title">No question selected</div>
-          <div class="current-q-num" id="live-q-num">Select a question to broadcast</div>
+          <div class="current-q-label">Now Unfolding</div>
+          <div class="current-q-title" id="live-q-title">No trial selected</div>
+          <div class="current-q-num" id="live-q-num">Choose a scroll to begin</div>
         </div>
 
-        <!-- Navigation -->
         <div class="nav-controls">
-          <button class="btn btn-ghost btn-full" id="btn-prev" onclick="navigateQuestion(-1)">◀ Prev</button>
-          <div class="q-counter"><span id="nav-cur">0</span> / <span id="nav-tot">0</span></div>
+          <button class="btn btn-ghost btn-full" id="btn-prev" onclick="navigateQuestion(-1)">◀ Prior</button>
+          <div class="q-counter"><span id="nav-cur">0</span>&nbsp;/&nbsp;<span id="nav-tot">0</span></div>
           <button class="btn btn-primary btn-full" id="btn-next" onclick="navigateQuestion(1)">Next ▶</button>
         </div>
 
-        <!-- Timer -->
         <div class="timer-section">
           <div class="timer-display" id="timer-display">02:00</div>
           <div class="timer-progress">
@@ -691,7 +878,7 @@
           <div class="timer-input-row">
             <label>Set (sec):</label>
             <input type="number" class="timer-input" id="timer-set-input" value="120" min="10" max="7200" />
-            <button class="btn btn-ghost" style="padding:8px 12px;" onclick="applyTimerSetting()">✓</button>
+            <button class="btn btn-ghost" style="padding:8px 12px;font-size:13px;" onclick="applyTimerSetting()">✓</button>
           </div>
           <div class="timer-controls">
             <button class="btn btn-success" id="btn-timer-toggle" onclick="toggleTimer()">▶ Start</button>
@@ -699,19 +886,17 @@
           </div>
         </div>
 
-        <!-- Broadcast Message -->
         <div class="broadcast-section">
-          <div class="card-title" style="margin-bottom:12px;font-size:14px;"><span class="icon">📢</span> Broadcast Message</div>
+          <div class="card-title" style="margin-bottom:12px;font-size:11px;"><span class="icon">📢</span>Royal Decree</div>
           <div class="broadcast-row">
-            <input class="broadcast-input" id="broadcast-input" type="text" placeholder="Send message to all participants…" />
+            <input class="broadcast-input" id="broadcast-input" type="text" placeholder="Proclaim to all contestants…" />
             <button class="btn btn-violet" onclick="broadcastMsg()">Send</button>
           </div>
         </div>
       </div>
 
-      <!-- Quick Jump -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:14px;"><span class="icon">⚡</span> Quick Jump</div>
+        <div class="card-title" style="margin-bottom:14px;"><span class="icon">⚡</span>Swift Passage</div>
         <div id="quick-jump-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;"></div>
       </div>
     </div>
@@ -721,15 +906,15 @@
 <!-- ─── EDITOR MODAL ─── -->
 <div class="modal-overlay" id="editor-modal">
   <div class="modal">
-    <div class="modal-title">✏️ <span id="modal-title-text">Add Question</span></div>
+    <div class="modal-title">📜 <span id="modal-title-text">Inscribe Scroll</span></div>
 
     <div class="form-group">
-      <label class="form-label">Question Title</label>
-      <input class="form-input" id="f-title" type="text" placeholder="e.g., Find the Logic Bug" />
+      <label class="form-label">Trial Title</label>
+      <input class="form-input" id="f-title" type="text" placeholder="e.g., The Corrupted Arithmetic" />
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
       <div class="form-group">
-        <label class="form-label">Language</label>
+        <label class="form-label">Tongue (Language)</label>
         <select class="form-select" id="f-lang">
           <option value="c">C</option>
           <option value="cpp">C++</option>
@@ -744,21 +929,21 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Code Snippet (with the bug)</label>
-      <textarea class="form-textarea" id="f-code" placeholder="// Paste your buggy code here…"></textarea>
+      <label class="form-label">The Cursed Code</label>
+      <textarea class="form-textarea" id="f-code" placeholder="// Paste the buggy code here…"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Answer / Hint (visible only to admin)</label>
-      <input class="form-input" id="f-hint" type="text" placeholder="e.g., Line 5: should be + instead of -" />
+      <label class="form-label">Maester's Answer / Hint (Admin Eyes Only)</label>
+      <input class="form-input" id="f-hint" type="text" placeholder="e.g., Line 5: '-' should be '+'" />
     </div>
 
-    <div id="modal-hint-display" style="display:none;margin-top:8px;padding:12px 16px;background:rgba(6,255,165,0.07);border:1px solid rgba(6,255,165,0.2);border-radius:10px;font-size:13px;color:var(--accent-green);">
-      💡 <strong>Admin Hint:</strong> <span id="modal-hint-text"></span>
+    <div id="modal-hint-display">
+      💡 <strong>Maester's Note:</strong> <span id="modal-hint-text"></span>
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeEditor()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQuestion()">💾 Save Question</button>
+      <button class="btn btn-ghost" onclick="closeEditor()">Abandon</button>
+      <button class="btn btn-primary" onclick="saveQuestion()">⚔ Seal the Scroll</button>
     </div>
   </div>
 </div>
@@ -797,18 +982,14 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('participant-link-url').textContent =
     window.location.href.replace('admin.html', 'participant.html');
 
-  // BroadcastChannel
   try { channel = new BroadcastChannel(CHANNEL_NAME); } catch(e) {}
 
-  // Load saved state
   loadState();
 
-  // Pin input enter key
   document.getElementById('pin-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') tryLogin();
   });
 
-  // Demo questions if none
   if (state.questions.length === 0) addSampleQuestions();
 });
 
@@ -821,12 +1002,12 @@ function tryLogin() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderAll();
-    toast('Logged in as Admin 🛡️', 'success');
+    toast('The chamber is unlocked, Maester. 🐉', 'success');
   } else {
     const err = document.getElementById('login-error');
-    err.textContent = '✗ Incorrect password. Try again.';
+    err.textContent = '✗ The ravens bring no such word. Try again.';
     document.getElementById('pin-input').value = '';
-    setTimeout(() => err.textContent = '', 3000);
+    setTimeout(() => err.textContent = '', 3500);
   }
 }
 function logout() {
@@ -852,7 +1033,6 @@ function loadState() {
 function broadcast(type, extra = {}) {
   const msg = { type, state, ...extra };
   if (channel) channel.postMessage(msg);
-  // Also poke storage for cross-tab compat
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   localStorage.setItem(STORAGE_KEY + '_event', JSON.stringify({ type, t: Date.now() }));
 }
@@ -868,17 +1048,17 @@ function renderAll() {
 }
 
 function renderQuestionList() {
-  const list = document.getElementById('q-list');
+  const list  = document.getElementById('q-list');
   const empty = document.getElementById('empty-state');
   list.innerHTML = '';
 
   if (state.questions.length === 0) {
     empty.style.display = 'block';
-    list.style.display = 'none';
+    list.style.display  = 'none';
     return;
   }
   empty.style.display = 'none';
-  list.style.display = 'flex';
+  list.style.display  = 'flex';
 
   state.questions.forEach((q, i) => {
     const el = document.createElement('div');
@@ -887,10 +1067,10 @@ function renderQuestionList() {
       <div class="q-num">${i + 1}</div>
       <div class="q-info">
         <div class="q-name">${escHtml(q.title)}</div>
-        <div class="q-lang">${q.language} • ${q.timeLimit}s</div>
+        <div class="q-lang">${q.language} · ${q.timeLimit}s</div>
       </div>
       <div class="q-actions">
-        <button class="q-action-btn edit" title="Edit" onclick="openEditor(${i}); event.stopPropagation();">✏</button>
+        <button class="q-action-btn edit"   title="Edit"   onclick="openEditor(${i}); event.stopPropagation();">✏</button>
         <button class="q-action-btn delete" title="Delete" onclick="deleteQuestion(${i}); event.stopPropagation();">✕</button>
       </div>
     `;
@@ -901,10 +1081,10 @@ function renderQuestionList() {
 
 function renderLiveControl() {
   const q = state.questions[state.currentIndex];
-  document.getElementById('live-q-title').textContent = q ? q.title : 'No question selected';
+  document.getElementById('live-q-title').textContent = q ? q.title : 'No trial selected';
   document.getElementById('live-q-num').textContent   = q
-    ? `Q${state.currentIndex + 1} of ${state.questions.length} — ${q.language.toUpperCase()} — ${q.timeLimit}s`
-    : 'Select a question to broadcast';
+    ? `Scroll ${state.currentIndex + 1} of ${state.questions.length} — ${q.language.toUpperCase()} — ${q.timeLimit}s`
+    : 'Choose a scroll to begin';
   document.getElementById('nav-cur').textContent = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
   document.getElementById('nav-tot').textContent = state.questions.length;
   updateTimerDisplay();
@@ -936,7 +1116,7 @@ function renderStats() {
 function openEditor(idx) {
   editingIndex = idx;
   const modal = document.getElementById('editor-modal');
-  document.getElementById('modal-title-text').textContent = idx === null ? 'Add Question' : 'Edit Question';
+  document.getElementById('modal-title-text').textContent = idx === null ? 'Inscribe Scroll' : 'Amend the Scroll';
 
   if (idx !== null) {
     const q = state.questions[idx];
@@ -972,17 +1152,17 @@ function saveQuestion() {
   const code   = document.getElementById('f-code').value.trim();
   const hint   = document.getElementById('f-hint').value.trim();
 
-  if (!title) { toast('Please enter a question title', 'error'); return; }
-  if (!code)  { toast('Please paste the code snippet', 'error'); return; }
+  if (!title) { toast('The scroll needs a title, Maester.', 'error'); return; }
+  if (!code)  { toast('The cursed code must be inscribed.', 'error'); return; }
 
   const q = { id: Date.now(), title, language: lang, timeLimit: time, code, hint };
 
   if (editingIndex === null) {
     state.questions.push(q);
-    toast('Question added ✓', 'success');
+    toast('Scroll inscribed in the archives. ⚔', 'success');
   } else {
     state.questions[editingIndex] = q;
-    toast('Question updated ✓', 'success');
+    toast('Scroll amended, Maester. 📜', 'info');
   }
   closeEditor();
   saveState();
@@ -990,15 +1170,13 @@ function saveQuestion() {
   renderAll();
 }
 function deleteQuestion(idx) {
-  if (!confirm(`Delete "${state.questions[idx].title}"?`)) return;
+  if (!confirm(`Cast away "${state.questions[idx].title}" into the flames?`)) return;
   state.questions.splice(idx, 1);
-  if (state.currentIndex >= state.questions.length) {
-    state.currentIndex = state.questions.length - 1;
-  }
+  if (state.currentIndex >= state.questions.length) state.currentIndex = state.questions.length - 1;
   saveState();
   broadcast('QUESTIONS_UPDATED');
   renderAll();
-  toast('Question deleted', 'info');
+  toast('The scroll is consumed by fire.', 'info');
 }
 
 // ═══════════════════════════════════════════════
@@ -1006,18 +1184,17 @@ function deleteQuestion(idx) {
 // ═══════════════════════════════════════════════
 function setCurrentQuestion(idx) {
   if (idx < 0 || idx >= state.questions.length) return;
-  state.currentIndex = idx;
-  // Auto-set timer from question
-  state.timerSeconds = state.questions[idx].timeLimit;
-  state.timerTotal   = state.questions[idx].timeLimit;
-  state.timerRunning = false;
+  state.currentIndex  = idx;
+  state.timerSeconds  = state.questions[idx].timeLimit;
+  state.timerTotal    = state.questions[idx].timeLimit;
+  state.timerRunning  = false;
   document.getElementById('timer-set-input').value = state.timerSeconds;
   clearTimerInterval();
   document.getElementById('btn-timer-toggle').textContent = '▶ Start';
   saveState();
   broadcast('QUESTION_CHANGE');
   renderAll();
-  toast(`Switched to Q${idx + 1}: ${state.questions[idx].title}`, 'info');
+  toast(`Trial begins: ${state.questions[idx].title}`, 'info');
 }
 function navigateQuestion(dir) {
   const next = state.currentIndex + dir;
@@ -1072,7 +1249,7 @@ function tickTimer() {
     state.timerRunning = false;
     document.getElementById('btn-timer-toggle').textContent = '▶ Start';
     broadcast('TIMER_END');
-    toast('⏰ Time is up!', 'error');
+    toast('⏰ The hourglass is empty!', 'error');
     return;
   }
   state.timerSeconds--;
@@ -1082,9 +1259,9 @@ function tickTimer() {
   renderStats();
 }
 function updateTimerDisplay() {
-  const el  = document.getElementById('timer-display');
-  const bar = document.getElementById('timer-bar');
-  const pct = state.timerTotal > 0 ? (state.timerSeconds / state.timerTotal) * 100 : 100;
+  const el   = document.getElementById('timer-display');
+  const bar  = document.getElementById('timer-bar');
+  const pct  = state.timerTotal > 0 ? (state.timerSeconds / state.timerTotal) * 100 : 100;
   const isDanger = state.timerSeconds <= 30 && state.timerTotal > 0;
 
   el.textContent = formatTime(state.timerSeconds);
@@ -1094,7 +1271,7 @@ function updateTimerDisplay() {
 }
 
 // ═══════════════════════════════════════════════
-//  BROADCAST MESSAGE
+//  BROADCAST
 // ═══════════════════════════════════════════════
 function broadcastMsg() {
   const msg = document.getElementById('broadcast-input').value.trim();
@@ -1104,7 +1281,7 @@ function broadcastMsg() {
   if (channel) channel.postMessage({ type: 'BROADCAST_MSG', message: msg, state });
   localStorage.setItem(STORAGE_KEY + '_event', JSON.stringify({ type: 'BROADCAST_MSG', message: msg, t: Date.now() }));
   document.getElementById('broadcast-input').value = '';
-  toast(`📢 Broadcast sent: "${msg}"`, 'info');
+  toast(`📢 Decree proclaimed: "${msg}"`, 'info');
 }
 
 // ═══════════════════════════════════════════════
@@ -1114,9 +1291,9 @@ function exportQuestions() {
   const blob = new Blob([JSON.stringify(state.questions, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = 'debug_relay_questions.json'; a.click();
+  a.href = url; a.download = 'debug_relay_scrolls.json'; a.click();
   URL.revokeObjectURL(url);
-  toast('Questions exported ✓', 'success');
+  toast('Scrolls exported from the archives. 📜', 'success');
 }
 function importQuestions(event) {
   const file = event.target.files[0];
@@ -1126,13 +1303,13 @@ function importQuestions(event) {
     try {
       const qs = JSON.parse(e.target.result);
       if (!Array.isArray(qs)) throw new Error();
-      state.questions = qs;
+      state.questions    = qs;
       state.currentIndex = -1;
       saveState();
       broadcast('QUESTIONS_UPDATED');
       renderAll();
-      toast(`Imported ${qs.length} questions ✓`, 'success');
-    } catch { toast('Invalid JSON file', 'error'); }
+      toast(`${qs.length} scrolls brought from the ravens. ✓`, 'success');
+    } catch { toast('The raven returned — invalid scroll.', 'error'); }
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -1143,7 +1320,7 @@ function importQuestions(event) {
 // ═══════════════════════════════════════════════
 function copyParticipantLink() {
   const url = window.location.href.replace('admin.html', 'participant.html');
-  navigator.clipboard.writeText(url).then(() => toast('Link copied! 📋', 'success'));
+  navigator.clipboard.writeText(url).then(() => toast('Link copied by raven! 📜', 'info'));
 }
 
 // ═══════════════════════════════════════════════
@@ -1152,28 +1329,28 @@ function copyParticipantLink() {
 function addSampleQuestions() {
   state.questions = [
     {
-      id: 1, title: "Wrong Arithmetic Operator",
+      id: 1, title: "The Wrong Arithmetic Rune",
       language: "c", timeLimit: 90, hint: "Line 4: '-' should be '+'",
       code: `#include <stdio.h>\n\nint add(int a, int b) {\n    return a - b;  // Bug here\n}\n\nint main() {\n    printf("%d\\n", add(3, 4));\n    return 0;\n}`
     },
     {
-      id: 2, title: "Off-by-One in Loop",
-      language: "cpp", timeLimit: 120, hint: "Loop condition: i <= n should be i < n",
+      id: 2, title: "The Off-by-One Curse",
+      language: "cpp", timeLimit: 120, hint: "Loop: i <= n should be i < n",
       code: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int arr[] = {1, 2, 3, 4, 5};\n    int n = 5, sum = 0;\n    for (int i = 0; i <= n; i++) {  // Bug here\n        sum += arr[i];\n    }\n    cout << sum << endl;\n    return 0;\n}`
     },
     {
-      id: 3, title: "Wrong Return in Recursion",
-      language: "python", timeLimit: 100, hint: "Line 3: 'n * factorial(n)' should be 'n * factorial(n-1)'",
+      id: 3, title: "The Endless Recursion Doom",
+      language: "python", timeLimit: 100, hint: "Line 3: factorial(n) should be factorial(n-1)",
       code: `def factorial(n):\n    if n == 0:\n        return 1\n    return n * factorial(n)  # Bug here\n\nprint(factorial(5))`
     },
     {
-      id: 4, title: "String Comparison Bug",
+      id: 4, title: "The String Doppelganger",
       language: "java", timeLimit: 110, hint: "Use .equals() instead of == to compare strings",
       code: `public class Main {\n    public static void main(String[] args) {\n        String a = new String("hello");\n        String b = new String("hello");\n        if (a == b) {  // Bug here\n            System.out.println("Equal");\n        } else {\n            System.out.println("Not Equal");\n        }\n    }\n}`
     },
     {
-      id: 5, title: "Missing Base Case",
-      language: "javascript", timeLimit: 130, hint: "Add base case: if (n <= 1) return n;",
+      id: 5, title: "The Missing Base Case",
+      language: "javascript", timeLimit: 130, hint: "Add: if (n <= 1) return n;",
       code: `function fibonacci(n) {\n    // Bug: missing base case\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log(fibonacci(6));`
     }
   ];
@@ -1185,7 +1362,7 @@ function addSampleQuestions() {
 // ═══════════════════════════════════════════════
 function formatTime(s) {
   if (s < 0) s = 0;
-  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const m   = Math.floor(s / 60).toString().padStart(2, '0');
   const sec = (s % 60).toString().padStart(2, '0');
   return `${m}:${sec}`;
 }
@@ -1198,7 +1375,12 @@ function toast(msg, type = 'info') {
   t.className = `toast ${type}`;
   t.textContent = msg;
   c.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(40px)'; t.style.transition = '0.3s'; setTimeout(() => t.remove(), 300); }, 3000);
+  setTimeout(() => {
+    t.style.opacity   = '0';
+    t.style.transform = 'translateX(40px)';
+    t.style.transition = '0.3s';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
 }
 </script>
 </body>
