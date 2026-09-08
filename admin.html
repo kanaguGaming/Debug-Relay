@@ -951,46 +951,87 @@
 <!-- ─── TOAST ─── -->
 <div class="toast-container" id="toast-container"></div>
 
-<script>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp }       from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
+import { getDatabase, ref, set, onValue, get }
+  from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js';
+
 // ═══════════════════════════════════════════════
-//  CONFIG
+//  ⚠️  PASTE YOUR FIREBASE CONFIG HERE
+//  Get it from: Firebase Console → Project Settings → Your apps → Web
 // ═══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "PASTE_API_KEY",
+  authDomain:        "PASTE_AUTH_DOMAIN",
+  databaseURL:       "PASTE_DATABASE_URL",
+  projectId:         "PASTE_PROJECT_ID",
+  storageBucket:     "PASTE_STORAGE_BUCKET",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId:             "PASTE_APP_ID"
+};
+// ═══════════════════════════════════════════════
+
 const ADMIN_PASSWORD = 'admin123';
 const CHANNEL_NAME   = 'debug_relay';
 const STORAGE_KEY    = 'debug_relay_state';
+const FB_PATH        = 'debug_relay/session'; // Firebase DB path
 
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
+// ─── Init Firebase ───
+let db = null;
+let fbRef = null;
+try {
+  const app = initializeApp(firebaseConfig);
+  db    = getDatabase(app);
+  fbRef = ref(db, FB_PATH);
+} catch(e) {
+  console.warn('Firebase not configured, falling back to localStorage only.', e);
+}
+
+// ─── State ───
 let state = {
   questions: [],
   currentIndex: -1,
   timerSeconds: 120,
   timerRunning: false,
   timerTotal: 120,
-  broadcastMessage: ''
+  broadcastMessage: '',
+  broadcastTs: 0
 };
 
 let timerInterval  = null;
 let editingIndex   = null;
 let channel        = null;
+let _suppressFbUpdate = false; // avoid echo loops
 
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
+// ─── Init ───
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('participant-link-url').textContent =
     window.location.href.replace('admin.html', 'participant.html');
 
   try { channel = new BroadcastChannel(CHANNEL_NAME); } catch(e) {}
 
-  loadState();
+  // 1. Try to load from Firebase first, else fall back to localStorage
+  if (fbRef) {
+    get(fbRef).then(snap => {
+      if (snap.exists()) {
+        state = { ...state, ...snap.val() };
+      } else {
+        loadLocalState();
+      }
+      if (state.questions.length === 0) addSampleQuestions();
+    }).catch(() => {
+      loadLocalState();
+      if (state.questions.length === 0) addSampleQuestions();
+    });
+  } else {
+    loadLocalState();
+    if (state.questions.length === 0) addSampleQuestions();
+  }
 
   document.getElementById('pin-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') tryLogin();
   });
-
-  if (state.questions.length === 0) addSampleQuestions();
 });
 
 // ═══════════════════════════════════════════════
@@ -1018,24 +1059,37 @@ function logout() {
 }
 
 // ═══════════════════════════════════════════════
-//  STATE PERSISTENCE + BROADCAST
+//  STATE PERSISTENCE — Firebase + localStorage fallback
 // ═══════════════════════════════════════════════
-function saveState() {
+function pushState() {
+  // Always write to localStorage (same-device sync)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // Write to Firebase (cross-device sync)
+  if (fbRef) {
+    _suppressFbUpdate = true;
+    set(fbRef, state).catch(e => console.warn('Firebase write failed:', e));
+    setTimeout(() => { _suppressFbUpdate = false; }, 800);
+  }
+  // BroadcastChannel for same-browser instant update
   if (channel) channel.postMessage({ type: 'STATE_UPDATE', state });
 }
-function loadState() {
+function loadLocalState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try { state = { ...state, ...JSON.parse(saved) }; } catch(e) {}
   }
 }
+// Legacy alias used by timer ticks
+const saveState = pushState;
 function broadcast(type, extra = {}) {
-  const msg = { type, state, ...extra };
-  if (channel) channel.postMessage(msg);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  localStorage.setItem(STORAGE_KEY + '_event', JSON.stringify({ type, t: Date.now() }));
+  pushState();
+  localStorage.setItem(STORAGE_KEY + '_event', JSON.stringify({ type, t: Date.now(), ...extra }));
+  if (fbRef) {
+    set(ref(db, FB_PATH + '_event'), { type, t: Date.now(), ...extra })
+      .catch(() => {});
+  }
 }
+
 
 // ═══════════════════════════════════════════════
 //  RENDER
